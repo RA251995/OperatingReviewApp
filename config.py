@@ -1,0 +1,1 @@
+DATABASE = r"D:\KSEB\PampadySS\SOS\power-system.s3db"

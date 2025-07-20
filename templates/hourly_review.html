@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="header-flex">
+  <a href="{{ url_for('sos.index') }}" class="btn home-btn" title="Home">
+    <img src="{{ url_for('static', filename='images/home.png') }}" alt="Home" class="home-icon">
+  </a>
+  <h2 class="center-heading">Hourly Operating Review</h2>
+</div>
+
+<form method="POST" class="review-form">
+  <label>Date:
+    <input type="date" name="date" value="{{ selected_date }}" required class="input-date">
+  </label>
+  <label>Time:
+    <select name="time" required class="input-time">
+      {% for t in allowed_times %}
+        <option value="{{ t }}" {% if t == selected_time %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn">Analyze</button>
+</form>
+
+<div class="tables-flex">
+  <div class="table-block">
+    {% if eht_data %}
+      <table border="1">
+        <thead>
+          <tr>
+            <th>110 kV Feeder</th>
+            <th>Load (A)</th>
+            <th>EM Import</th>
+            <th>EM Export</th>
+            <th>Δ EM Import</th>
+            <th>Δ EM Export</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in eht_data %}
+          <tr>
+            <td>{{ row.code }}</td>
+            <td>{{ row.current }}</td>
+            <td>{{ row.emc_import }}</td>
+            <td>{{ row.emc_export }}</td>
+            <td>{{ row.delta_emc_import }}</td>
+            <td>{{ row.delta_emc_export }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    {% if tf_data %}
+      <table border="1" style="margin-top:16px;">
+        <thead>
+          <tr>
+            <th>Transformer</th>
+            <th>Load (A)</th>
+            <th>EM Import</th>
+            <th>EM Export</th>
+            <th>Δ EM Import</th>
+            <th>Δ EM Export</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in tf_data %}
+          <tr>
+            <td>{{ row.code }}</td>
+            <td>{{ row.current }}</td>
+            <td>{{ row.emc_import }}</td>
+            <td>{{ row.emc_export }}</td>
+            <td>{{ row.delta_emc_import }}</td>
+            <td>{{ row.delta_emc_export }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+  <div class="table-block">
+    {% if ht_data %}
+      <table border="1">
+        <thead>
+          <tr>
+            <th>11 kV Feeder</th>
+            <th>Load (A)</th>
+            <th>EM Import</th>
+            <th>EM Export</th>
+            <th>Δ EM Import</th>
+            <th>Δ EM Export</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in ht_data %}
+          <tr>
+            <td>{{ row.code }}</td>
+            <td>{{ row.current }}</td>
+            <td>{{ row.emc_import }}</td>
+            <td>{{ row.emc_export }}</td>
+            <td>{{ row.delta_emc_import }}</td>
+            <td>{{ row.delta_emc_export }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

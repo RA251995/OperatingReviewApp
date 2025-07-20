@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SOS Review</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height:48px;">
+        <h1>Substation Operating Review</h1>
+    </header>
+    <main>{% block content %}{% endblock %}</main>
+</body>
+</html>
