@@ -6,7 +6,7 @@ body {
 header {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 32px;
     justify-content: center;
     background: #003366;
     color: white;
@@ -123,6 +123,14 @@ main {
 
 .table-block tr:nth-child(even) {
     background: #f9f9f9;
+}
+
+.dashboard-links {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 300px;
+    margin: 28px auto 0 auto; /* Add top margin to separate from heading */
 }
 
 @media (max-width: 900px) {

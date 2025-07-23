@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="header-flex">
+  <a href="{{ url_for('sos.index') }}" class="btn home-btn" title="Home">
+    <img src="{{ url_for('static', filename='images/home.png') }}" alt="Home" class="home-icon">
+  </a>
+  <h2 class="center-heading">Town ABC Feeder Details</h2>
+</div>
+
+<form method="POST" class="review-form">
+  <label>Month:
+    <input type="month" name="month" value="{{ selected_month }}" required class="input-month">
+  </label>
+  <button type="submit" class="btn">Show Details</button>
+</form>
+
+<div class="tables-flex">
+  <div class="table-block">
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Statistic</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Max Load (A)</td>
+          <td>{{ abc_details.max_current if abc_details and abc_details.max_current is not none else 'N/A' }}</td>
+        </tr>
+        <tr>
+          <td>Date of Max Load</td>
+          <td>{{ abc_details.max_date if abc_details and abc_details.max_date else 'N/A' }}</td>
+        </tr>
+        <tr>
+          <td>Time of Max Load</td>
+          <td>{{ abc_details.max_time if abc_details and abc_details.max_time else 'N/A' }}</td>
+        </tr>
+        <tr>
+          <td>Normal Peak Load (A)</td>
+          <td>{{ abc_details.mode_current if abc_details and abc_details.mode_current is not none else 'N/A' }}</td>
+        </tr>
+        <tr>
+          <td>Readings within ±10% of Normal Peak</td>
+          <td>{{ abc_details.count_in_range if abc_details and abc_details.count_in_range is not none else 'N/A' }}</td>
+        </tr>
+        <tr>
+          <td>Percent readings within ±10% of Normal Peak</td>
+          <td>
+            {% if abc_details and abc_details.percent_in_range is not none and abc_details.percent_in_range is number %}
+              {{ abc_details.percent_in_range|round(2) }}%
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Normal Peak Period</td>
+          <td>
+            {% if abc_details and abc_details.peak_period %}
+              {{ "Day" if abc_details.peak_period == "day" else "Night" if abc_details.peak_period == "night" else abc_details.peak_period }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

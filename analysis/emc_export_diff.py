@@ -4,7 +4,7 @@ for hourly operating review.
 """
 
 from datetime import datetime, timedelta
-from routes.db_service import get_connection  # Use the shared DB connection function
+from routes.db_service import get_connection
 
 
 def get_em_diff(date_str, time_str, db_path, db_table, db_code_column="feedercode"):
@@ -59,11 +59,13 @@ def get_em_diff(date_str, time_str, db_path, db_table, db_code_column="feedercod
     # Fetch previous rows if applicable
     previous_export_data = {}
     previous_import_data = {}
+    previous_current_data = {}
     if previous_time:
         cursor.execute(query, (previous_date, previous_time))
         for row in cursor.fetchall():
             previous_export_data[row[db_code_column]] = row['emc_export']
             previous_import_data[row[db_code_column]] = row['emc_import']
+            previous_current_data[row[db_code_column]] = row['current']
 
     # Close the database connection
     conn.close()
@@ -73,8 +75,10 @@ def get_em_diff(date_str, time_str, db_path, db_table, db_code_column="feedercod
         feeder = row[db_code_column]
         current_export = row['emc_export']
         current_import = row['emc_import']
+        current_current = row['current']
         prev_export = previous_export_data.get(feeder)
         prev_import = previous_import_data.get(feeder)
+        prev_current = previous_current_data.get(feeder)
 
         # Helper function to get max decimal places between two numbers
         def max_decimal_places(a, b):
@@ -85,15 +89,17 @@ def get_em_diff(date_str, time_str, db_path, db_table, db_code_column="feedercod
                 return 0
             return max(count_decimals(a), count_decimals(b))
 
-        # Calculate export difference if hourly
-        if str(time_str).endswith(":00") and prev_export is not None and current_export is not None:
+        # Calculate export difference if hourly and both current and previous values are available (>0)
+        if (str(time_str).endswith(":00")
+            and current_current > 0 and prev_current > 0):
             digits = max_decimal_places(current_export, prev_export)
             delta_export = round(current_export - prev_export, digits)
         else:
             delta_export = None
 
-        # Calculate import difference if hourly
-        if str(time_str).endswith(":00") and prev_import is not None and current_import is not None:
+        # Calculate import difference if hourly and both current and previous values are available (>0)
+        if (str(time_str).endswith(":00") 
+            and current_current > 0 and prev_current > 0):
             digits = max_decimal_places(current_import, prev_import)
             delta_import = round(current_import - prev_import, digits)
         else:

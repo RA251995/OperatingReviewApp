@@ -23,19 +23,20 @@
 
 <div class="tables-flex">
   <div class="table-block">
-    {% if eht_data %}
-      <table border="1">
-        <thead>
-          <tr>
-            <th>110 kV Feeder</th>
-            <th>Load (A)</th>
-            <th>EM Import</th>
-            <th>EM Export</th>
-            <th>Δ EM Import</th>
-            <th>Δ EM Export</th>
-          </tr>
-        </thead>
-        <tbody>
+    <!-- EHT Table -->
+    <table border="1">
+      <thead>
+        <tr>
+          <th>110 kV Feeder</th>
+          <th>Load (A)</th>
+          <th>EM Import</th>
+          <th>EM Export</th>
+          <th>Δ EM Import</th>
+          <th>Δ EM Export</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if eht_data and eht_data|length > 0 %}
           {% for row in eht_data %}
           <tr>
             <td>{{ row.code }}</td>
@@ -46,23 +47,50 @@
             <td>{{ row.delta_emc_export }}</td>
           </tr>
           {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
-
-    {% if tf_data %}
-      <table border="1" style="margin-top:16px;">
-        <thead>
+        {% else %}
           <tr>
-            <th>Transformer</th>
-            <th>Load (A)</th>
-            <th>EM Import</th>
-            <th>EM Export</th>
-            <th>Δ EM Import</th>
-            <th>Δ EM Export</th>
+            <td colspan="6" style="text-align:center;">No data available</td>
           </tr>
-        </thead>
-        <tbody>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <!-- Station Load Table -->
+    <table border="1" style="margin-top:16px;">
+      <thead>
+        <tr>
+          <th colspan="2">Station Load (A)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>110 kV</td>
+          <td>
+            {% if station_load is not none %}
+              {{ station_load }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- End Station Load Table -->
+
+    <!-- Transformer Table -->
+    <table border="1" style="margin-top:16px;">
+      <thead>
+        <tr>
+          <th>Transformer</th>
+          <th>Load (A)</th>
+          <th>EM Import</th>
+          <th>EM Export</th>
+          <th>Δ EM Import</th>
+          <th>Δ EM Export</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tf_data and tf_data|length > 0 %}
           {% for row in tf_data %}
           <tr>
             <td>{{ row.code }}</td>
@@ -73,24 +101,30 @@
             <td>{{ row.delta_emc_export }}</td>
           </tr>
           {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
+        {% else %}
+          <tr>
+            <td colspan="6" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    <!-- End Transformer Table -->
   </div>
   <div class="table-block">
-    {% if ht_data %}
-      <table border="1">
-        <thead>
-          <tr>
-            <th>11 kV Feeder</th>
-            <th>Load (A)</th>
-            <th>EM Import</th>
-            <th>EM Export</th>
-            <th>Δ EM Import</th>
-            <th>Δ EM Export</th>
-          </tr>
-        </thead>
-        <tbody>
+    <!-- HT Table -->
+    <table border="1">
+      <thead>
+        <tr>
+          <th>11 kV Feeder</th>
+          <th>Load (A)</th>
+          <th>EM Import</th>
+          <th>EM Export</th>
+          <th>Δ EM Import</th>
+          <th>Δ EM Export</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if ht_data and ht_data|length > 0 %}
           {% for row in ht_data %}
           <tr>
             <td>{{ row.code }}</td>
@@ -101,9 +135,14 @@
             <td>{{ row.delta_emc_export }}</td>
           </tr>
           {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
+        {% else %}
+          <tr>
+            <td colspan="6" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    <!-- End HT Table -->
   </div>
 </div>
 
