@@ -88,3 +88,9 @@ def get_closest_allowed_datetime(allowed_times):
                 break
 
     return selected_date, closest
+
+def get_previous_date():
+    """
+    Returns the previous date in 'YYYY-MM-DD' format.
+    """
+    return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")

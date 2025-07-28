@@ -7,10 +7,11 @@ This module defines the blueprint and view functions for:
 """
 
 from flask import Blueprint, render_template, request, current_app
-from utils.date_utils import format_date, generate_allowed_times, get_closest_allowed_datetime, get_previous_month
+from utils.date_utils import format_date, generate_allowed_times, get_closest_allowed_datetime, get_previous_month, get_previous_date
 from analysis.emc_export_diff import get_em_diff
 from analysis.station_load import get_station_load
 from analysis.abc_details import get_abc_details
+from analysis.daily_review import get_daily_current_stat
 
 # Create a Blueprint for SOS routes
 sos_bp = Blueprint('sos', __name__)
@@ -77,4 +78,32 @@ def abc_details():
         "abc_details.html",
         selected_month=selected_month,
         abc_details=abc_details
+    )
+
+# Daily review route
+@sos_bp.route("/daily-review", methods=["GET", "POST"])
+def daily_review():
+    selected_date = None
+    ht_data = None
+    eht_data = None
+    tf_data = None
+
+    if request.method == "POST":
+        selected_date = request.form.get("date")
+    else:
+        selected_date = get_previous_date()
+
+    # Use format_date from utils to convert to 'DD-MM-YYYY'
+    query_date = format_date(selected_date)
+
+    ht_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="sosht", db_code_column="feedercode")
+    eht_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="soseht", db_code_column="feedercode")
+    tf_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="sostf", db_code_column="tfcode")
+
+    return render_template(
+        "daily_review.html",
+        selected_date=selected_date,
+        ht_data=ht_data,
+        eht_data=eht_data,
+        tf_data=tf_data
     )
