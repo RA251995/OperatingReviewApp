@@ -80,16 +80,13 @@ def abc_details():
         abc_details=abc_details
     )
 
-# Daily review route
-@sos_bp.route("/daily-review", methods=["GET", "POST"])
-def daily_review():
+# Daily load review route
+@sos_bp.route("/daily-review-load", methods=["GET", "POST"])
+def daily_review_load():
     selected_date = None
     ht_data = None
     eht_data = None
     tf_data = None
-    ht_em_diff = None
-    eht_em_diff = None
-    tf_em_diff = None
     station_peak_min = None
 
     if request.method == "POST":
@@ -97,27 +94,46 @@ def daily_review():
     else:
         selected_date = get_previous_date()
 
-    # Use format_date from utils to convert to 'DD-MM-YYYY'
     query_date = format_date(selected_date)
 
     ht_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="sosht", db_code_column="feedercode")
     eht_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="soseht", db_code_column="feedercode")
     tf_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="sostf", db_code_column="tfcode")
 
-    ht_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="sosht", db_code_column="feedercode")
-    eht_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="soseht", db_code_column="feedercode")
-    tf_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="sostf", db_code_column="tfcode")
-
     station_peak_min = get_station_peak_min(current_app.config['DATABASE'], query_date)
 
     return render_template(
-        "daily_review.html",
+        "daily_review_load.html",
         selected_date=selected_date,
         ht_data=ht_data,
         eht_data=eht_data,
         tf_data=tf_data,
+        station_peak_min=station_peak_min
+    )
+
+# Daily energy review route
+@sos_bp.route("/daily-review-energy", methods=["GET", "POST"])
+def daily_review_energy():
+    selected_date = None
+    ht_em_diff = None
+    eht_em_diff = None
+    tf_em_diff = None
+
+    if request.method == "POST":
+        selected_date = request.form.get("date")
+    else:
+        selected_date = get_previous_date()
+
+    query_date = format_date(selected_date)
+
+    ht_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="sosht", db_code_column="feedercode")
+    eht_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="soseht", db_code_column="feedercode")
+    tf_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="sostf", db_code_column="tfcode")
+
+    return render_template(
+        "daily_review_energy.html",
+        selected_date=selected_date,
         ht_em_diff=ht_em_diff,
         eht_em_diff=eht_em_diff,
-        tf_em_diff=tf_em_diff,
-        station_peak_min=station_peak_min
+        tf_em_diff=tf_em_diff
     )

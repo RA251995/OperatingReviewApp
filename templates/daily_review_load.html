@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="header-flex">
+  <a href="{{ url_for('sos.index') }}" class="btn home-btn" title="Home">
+    <img src="{{ url_for('static', filename='images/home.png') }}" alt="Home" class="home-icon">
+  </a>
+  <h2 class="center-heading">Daily Operating Review</h2>
+</div>
+
+<form method="POST" class="review-form">
+  <label>Date:
+    <input type="date" name="date" value="{{ selected_date }}" required class="input-date">
+  </label>
+  <button type="submit" class="btn">Show Details</button>
+</form>
+
+<div class="tables-flex">
+  <!-- Left: Current statistics -->
+  <div class="table-block">
+
+    <h3 class="section-heading">110kV Station Load Summary</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Value</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Peak Load (A)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.peak is not none %}
+              {{ station_peak_min.peak }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.peak_time %}
+              {{ station_peak_min.peak_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Min Load (A)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.min is not none %}
+              {{ station_peak_min.min }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.min_time %}
+              {{ station_peak_min.min_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>11kV Feeders</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Feeder</th>
+          <th>Max Value</th>
+          <th>Time of Max</th>
+          <th>Min Value</th>
+          <th>Time of Min</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if ht_data and ht_data|length > 0 %}
+          {% for feeder in ht_data %}
+          <tr>
+            <td>{{ feeder.code }}</td>
+            <td>{{ feeder.max_value if feeder.max_value is not none else 'N/A' }}</td>
+            <td>{{ feeder.max_time if feeder.max_time else 'N/A' }}</td>
+            <td>{{ feeder.min_value if feeder.min_value is not none else 'N/A' }}</td>
+            <td>{{ feeder.min_time if feeder.min_time else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <h3 class="section-heading">EHT Feeders</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Feeder</th>
+          <th>Max Value</th>
+          <th>Time of Max</th>
+          <th>Min Value</th>
+          <th>Time of Min</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if eht_data and eht_data|length > 0 %}
+          {% for feeder in eht_data %}
+          <tr>
+            <td>{{ feeder.code }}</td>
+            <td>{{ feeder.max_value if feeder.max_value is not none else 'N/A' }}</td>
+            <td>{{ feeder.max_time if feeder.max_time else 'N/A' }}</td>
+            <td>{{ feeder.min_value if feeder.min_value is not none else 'N/A' }}</td>
+            <td>{{ feeder.min_time if feeder.min_time else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <h3 class="section-heading">Transformers</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Transformer</th>
+          <th>Max Value</th>
+          <th>Time of Max</th>
+          <th>Min Value</th>
+          <th>Time of Min</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tf_data and tf_data|length > 0 %}
+          {% for tf in tf_data %}
+          <tr>
+            <td>{{ tf.code }}</td>
+            <td>{{ tf.max_value if tf.max_value is not none else 'N/A' }}</td>
+            <td>{{ tf.max_time if tf.max_time else 'N/A' }}</td>
+            <td>{{ tf.min_value if tf.min_value is not none else 'N/A' }}</td>
+            <td>{{ tf.min_time if tf.min_time else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

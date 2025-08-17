@@ -4,7 +4,8 @@
 
 <div class="dashboard-links">
   <a href="{{ url_for('sos.hourly_review') }}" class="btn">Hourly Operating Review</a>
-  <a href="{{ url_for('sos.daily_review') }}" class="btn">Dialy Operating Review</a>
+  <a href="{{ url_for('sos.daily_review_load') }}" class="btn">Dialy Operating Review - Load</a>
+  <a href="{{ url_for('sos.daily_review_energy') }}" class="btn">Daily Operating Review - Energy</a>
   <a href="{{ url_for('sos.abc_details') }}" class="btn">Town ABC Feeder Details</a>
 </div>
 {% endblock %}
