@@ -124,22 +124,26 @@ def get_station_peak_min(db_path, query_date):
     # Get all PLPM and PMKJ currents by time
     cursor.execute(f"""
         SELECT timeobserved, 
-               MAX(CASE WHEN feedercode = 1PLPM THEN current END) AS plpm_current,
-               MAX(CASE WHEN feedercode = 1PMKJ THEN current END) AS pmkj_current
+               MAX(CASE WHEN feedercode = :feeder_code_1 THEN current END) AS feeder_1_current,
+               MAX(CASE WHEN feedercode = :feeder_code_2 THEN current END) AS feeder_2_current
         FROM soseht
-        WHERE dateobserved = ?
-          AND (feedercode = 1PLPM OR feedercode = 1PMKJ)
+        WHERE dateobserved = :query_date
+          AND (feedercode = :feeder_code_1 OR feedercode = :feeder_code_2)
           AND current >= 0
         GROUP BY timeobserved
-    """,  (query_date,))
+    """,  {
+        "feeder_code_1": '1PLPM',
+        "feeder_code_2": '1PMKJ',
+        "query_date": query_date
+    })
     rows = cursor.fetchall()
     conn.close()
 
     # Calculate station load for each time
     station_loads = []
     for row in rows:
-        plpm = row['plpm_current']
-        pmkj = row['pmkj_current']
+        plpm = row['feeder_1_current']
+        pmkj = row['feeder_2_current']
         if plpm is not None and pmkj is not None:
             load = plpm - pmkj
             station_loads.append({'load': load, 'time': row['timeobserved']})

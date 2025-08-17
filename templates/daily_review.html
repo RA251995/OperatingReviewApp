@@ -20,26 +20,49 @@
 
     <h3 class="section-heading">110kV Station Load Summary</h3>
     <table border="1">
-      <tr>
-        <th>Peak Load (A)</th>
-        <td>
-          {% if station_peak_min and station_peak_min.peak is not none %}
-            {{ station_peak_min.peak }} at {{ station_peak_min.peak_time }}
-          {% else %}
-            N/A
-          {% endif %}
-        </td>
-      </tr>
-      <tr>
-        <th>Min Load (A)</th>
-        <td>
-          {% if station_peak_min and station_peak_min.min is not none %}
-            {{ station_peak_min.min }} at {{ station_peak_min.min_time }}
-          {% else %}
-            N/A
-          {% endif %}
-        </td>
-      </tr>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Value</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Peak Load (A)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.peak is not none %}
+              {{ station_peak_min.peak }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.peak_time %}
+              {{ station_peak_min.peak_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Min Load (A)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.min is not none %}
+              {{ station_peak_min.min }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.min_time %}
+              {{ station_peak_min.min_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
     </table>
 
     <h3>11kV Feeders</h3>
