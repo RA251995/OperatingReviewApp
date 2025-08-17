@@ -11,7 +11,7 @@ from utils.date_utils import format_date, generate_allowed_times, get_closest_al
 from analysis.emc_export_diff import get_em_diff
 from analysis.station_load import get_station_load
 from analysis.abc_details import get_abc_details
-from analysis.daily_review import get_daily_current_stat
+from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min
 
 # Create a Blueprint for SOS routes
 sos_bp = Blueprint('sos', __name__)
@@ -100,10 +100,24 @@ def daily_review():
     eht_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="soseht", db_code_column="feedercode")
     tf_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="sostf", db_code_column="tfcode")
 
+    ht_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="sosht", db_code_column="feedercode")
+    eht_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="soseht", db_code_column="feedercode")
+    tf_em_diff = get_daily_em_diff_stat(current_app.config['DATABASE'], query_date, db_table="sostf", db_code_column="tfcode")
+
+    # # Get station peak and min for 110kV side
+    # station_peak_min = get_station_peak_min(
+    #     current_app.config['DATABASE'],
+    #     query_date
+    # )
+
     return render_template(
         "daily_review.html",
         selected_date=selected_date,
         ht_data=ht_data,
         eht_data=eht_data,
-        tf_data=tf_data
+        tf_data=tf_data,
+        ht_em_diff=ht_em_diff,
+        eht_em_diff=eht_em_diff,
+        tf_em_diff=tf_em_diff,
+        # station_peak_min=station_peak_min
     )

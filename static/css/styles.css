@@ -90,6 +90,14 @@ main {
     background: #e6f0ff;
 }
 
+.section-heading {
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+    color: #003366;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
 .tables-flex {
     display: flex;
     gap: 24px;
@@ -100,6 +108,7 @@ main {
 .table-block {
     min-width: 320px;
     max-width: 100%;
+    flex: 1 1 0;
 }
 
 .table-block table {

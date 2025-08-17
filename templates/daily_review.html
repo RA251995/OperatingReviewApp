@@ -15,16 +15,42 @@
 </form>
 
 <div class="tables-flex">
+  <!-- Left: Current statistics -->
   <div class="table-block">
+
+    <h3 class="section-heading">110kV Station Load Summary</h3>
+    <table border="1">
+      <tr>
+        <th>Peak Load (A)</th>
+        <td>
+          {% if station_peak_min and station_peak_min.peak is not none %}
+            {{ station_peak_min.peak }} at {{ station_peak_min.peak_time }}
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>Min Load (A)</th>
+        <td>
+          {% if station_peak_min and station_peak_min.min is not none %}
+            {{ station_peak_min.min }} at {{ station_peak_min.min_time }}
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+
     <h3>11kV Feeders</h3>
     <table border="1">
       <thead>
         <tr>
           <th>Feeder</th>
-          <th>Min Value</th>
-          <th>Time of Min</th>
           <th>Max Value</th>
           <th>Time of Max</th>
+          <th>Min Value</th>
+          <th>Time of Min</th>
         </tr>
       </thead>
       <tbody>
@@ -32,10 +58,10 @@
           {% for feeder in ht_data %}
           <tr>
             <td>{{ feeder.code }}</td>
-            <td>{{ feeder.min_value if feeder.min_value is not none else 'N/A' }}</td>
-            <td>{{ feeder.min_time if feeder.min_time else 'N/A' }}</td>
             <td>{{ feeder.max_value if feeder.max_value is not none else 'N/A' }}</td>
             <td>{{ feeder.max_time if feeder.max_time else 'N/A' }}</td>
+            <td>{{ feeder.min_value if feeder.min_value is not none else 'N/A' }}</td>
+            <td>{{ feeder.min_time if feeder.min_time else 'N/A' }}</td>
           </tr>
           {% endfor %}
         {% else %}
@@ -46,15 +72,15 @@
       </tbody>
     </table>
 
-    <h3 style="margin-top:2em;">EHT Feeders</h3>
+    <h3 class="section-heading">EHT Feeders</h3>
     <table border="1">
       <thead>
         <tr>
           <th>Feeder</th>
-          <th>Min Value</th>
-          <th>Time of Min</th>
           <th>Max Value</th>
           <th>Time of Max</th>
+          <th>Min Value</th>
+          <th>Time of Min</th>
         </tr>
       </thead>
       <tbody>
@@ -62,10 +88,10 @@
           {% for feeder in eht_data %}
           <tr>
             <td>{{ feeder.code }}</td>
-            <td>{{ feeder.min_value if feeder.min_value is not none else 'N/A' }}</td>
-            <td>{{ feeder.min_time if feeder.min_time else 'N/A' }}</td>
             <td>{{ feeder.max_value if feeder.max_value is not none else 'N/A' }}</td>
             <td>{{ feeder.max_time if feeder.max_time else 'N/A' }}</td>
+            <td>{{ feeder.min_value if feeder.min_value is not none else 'N/A' }}</td>
+            <td>{{ feeder.min_time if feeder.min_time else 'N/A' }}</td>
           </tr>
           {% endfor %}
         {% else %}
@@ -76,15 +102,15 @@
       </tbody>
     </table>
 
-    <h3 style="margin-top:2em;">Transformers</h3>
+    <h3 class="section-heading">Transformers</h3>
     <table border="1">
       <thead>
         <tr>
           <th>Transformer</th>
-          <th>Min Value</th>
-          <th>Time of Min</th>
           <th>Max Value</th>
           <th>Time of Max</th>
+          <th>Min Value</th>
+          <th>Time of Min</th>
         </tr>
       </thead>
       <tbody>
@@ -92,15 +118,132 @@
           {% for tf in tf_data %}
           <tr>
             <td>{{ tf.code }}</td>
-            <td>{{ tf.min_value if tf.min_value is not none else 'N/A' }}</td>
-            <td>{{ tf.min_time if tf.min_time else 'N/A' }}</td>
             <td>{{ tf.max_value if tf.max_value is not none else 'N/A' }}</td>
             <td>{{ tf.max_time if tf.max_time else 'N/A' }}</td>
+            <td>{{ tf.min_value if tf.min_value is not none else 'N/A' }}</td>
+            <td>{{ tf.min_time if tf.min_time else 'N/A' }}</td>
           </tr>
           {% endfor %}
         {% else %}
           <tr>
             <td colspan="5" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Right: Energy meter statistics -->
+  <div class="table-block">
+    <h3>11kV Feeders - Hourly Δ EM Import/Export</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Feeder</th>
+          <th>Max Δ EM Import</th>
+          <th>Time of Max</th>
+          <th>Min Δ EM Import</th>
+          <th>Time of Min</th>
+          <th>Max Δ EM Export</th>
+          <th>Time of Max</th>
+          <th>Min Δ EM Export</th>
+          <th>Time of Min</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if ht_em_diff and ht_em_diff|length > 0 %}
+          {% for row in ht_em_diff %}
+          <tr>
+            <td>{{ row.code }}</td>
+            <td>{{ row.max_delta_emc_import if row.max_delta_emc_import is not none else 'N/A' }}</td>
+            <td>{{ row.time_max_delta_emc_import if row.time_max_delta_emc_import else 'N/A' }}</td>
+            <td>{{ row.min_delta_emc_import if row.min_delta_emc_import is not none else 'N/A' }}</td>
+            <td>{{ row.time_min_delta_emc_import if row.time_min_delta_emc_import else 'N/A' }}</td>
+            <td>{{ row.max_delta_emc_export if row.max_delta_emc_export is not none else 'N/A' }}</td>
+            <td>{{ row.time_max_delta_emc_export if row.time_max_delta_emc_export else 'N/A' }}</td>
+            <td>{{ row.min_delta_emc_export if row.min_delta_emc_export is not none else 'N/A' }}</td>
+            <td>{{ row.time_min_delta_emc_export if row.time_min_delta_emc_export else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <h3 class="section-heading">EHT Feeders - Hourly Δ EM Import/Export</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Feeder</th>
+          <th>Max Δ EM Import</th>
+          <th>Time of Max</th>
+          <th>Min Δ EM Import</th>
+          <th>Time of Min</th>
+          <th>Max Δ EM Export</th>
+          <th>Time of Max</th>
+          <th>Min Δ EM Export</th>
+          <th>Time of Min</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if eht_em_diff and eht_em_diff|length > 0 %}
+          {% for row in eht_em_diff %}
+          <tr>
+            <td>{{ row.code }}</td>
+            <td>{{ row.max_delta_emc_import if row.max_delta_emc_import is not none else 'N/A' }}</td>
+            <td>{{ row.time_max_delta_emc_import if row.time_max_delta_emc_import else 'N/A' }}</td>
+            <td>{{ row.min_delta_emc_import if row.min_delta_emc_import is not none else 'N/A' }}</td>
+            <td>{{ row.time_min_delta_emc_import if row.time_min_delta_emc_import else 'N/A' }}</td>
+            <td>{{ row.max_delta_emc_export if row.max_delta_emc_export is not none else 'N/A' }}</td>
+            <td>{{ row.time_max_delta_emc_export if row.time_max_delta_emc_export else 'N/A' }}</td>
+            <td>{{ row.min_delta_emc_export if row.min_delta_emc_export is not none else 'N/A' }}</td>
+            <td>{{ row.time_min_delta_emc_export if row.time_min_delta_emc_export else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <h3 class="section-heading">Transformers - Hourly Δ EM Import/Export</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Transformer</th>
+          <th>Max Δ EM Import</th>
+          <th>Time of Max</th>
+          <th>Min Δ EM Import</th>
+          <th>Time of Min</th>
+          <th>Max Δ EM Export</th>
+          <th>Time of Max</th>
+          <th>Min Δ EM Export</th>
+          <th>Time of Min</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tf_em_diff and tf_em_diff|length > 0 %}
+          {% for row in tf_em_diff %}
+          <tr>
+            <td>{{ row.code }}</td>
+            <td>{{ row.max_delta_emc_import if row.max_delta_emc_import is not none else 'N/A' }}</td>
+            <td>{{ row.time_max_delta_emc_import if row.time_max_delta_emc_import else 'N/A' }}</td>
+            <td>{{ row.min_delta_emc_import if row.min_delta_emc_import is not none else 'N/A' }}</td>
+            <td>{{ row.time_min_delta_emc_import if row.time_min_delta_emc_import else 'N/A' }}</td>
+            <td>{{ row.max_delta_emc_export if row.max_delta_emc_export is not none else 'N/A' }}</td>
+            <td>{{ row.time_max_delta_emc_export if row.time_max_delta_emc_export else 'N/A' }}</td>
+            <td>{{ row.min_delta_emc_export if row.min_delta_emc_export is not none else 'N/A' }}</td>
+            <td>{{ row.time_min_delta_emc_export if row.time_min_delta_emc_export else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" style="text-align:center;">No data available</td>
           </tr>
         {% endif %}
       </tbody>

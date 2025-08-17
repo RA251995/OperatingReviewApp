@@ -13,7 +13,7 @@ def generate_allowed_times():
     """
     Generates a sorted list of allowed time strings for selection.
     Includes hourly times from 01:00 to 24:00 and half-hourly times
-    from 05:30 to 08:00 and 18:30 to 20:30.
+    from 05:30 to 08:00 and 18:30 to 21:30.
 
     Returns:
         list of str: Allowed times in 'HH:MM' format.
@@ -25,8 +25,8 @@ def generate_allowed_times():
     # 05:30 to 08:00 half-hourly (removed 08:30)
     for h in range(5, 8):
         times.append(f"{h:02d}:30")
-    # 18:30 to 20:30 half-hourly
-    for h in range(18, 21):
+    # 18:30 to 21:30 half-hourly
+    for h in range(18, 22):
         times.append(f"{h:02d}:30")
     times = sorted(times)
     return times
