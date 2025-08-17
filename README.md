@@ -1,5 +1,6 @@
 # Substation Operating Review App
-Web appliating to review and analyze SOS data.
+Web application to review and analyze SOS data.
+![Substation Operating Review](screenshots/all-devices-black.png)
 
 ## Features
 - Hourly Operating Review
@@ -14,8 +15,3 @@ venv\Scripts\activate # source venv/bin/activate
 pip install -r requirements.txt
 python app.py
 ```
-
-## Screenshots
-![Dashboard Page](screenshots/dashboard.png)
-
-![Dialy Operating Review - Energy Page](screenshots/dialy_review_energy.png)
