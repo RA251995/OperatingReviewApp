@@ -117,7 +117,6 @@ def get_daily_em_diff_stat(db_path, query_date, db_table="sosht", db_code_column
 def get_station_peak_min(db_path, query_date):
     """
     Returns a dict with station peak (max) and min load (PLPM - PMKJ) and their times for the given table/date.
-    For 110kV side, use db_table="soseht".
     """
     conn = get_connection(db_path)
     cursor = conn.cursor()
@@ -164,4 +163,40 @@ def get_station_peak_min(db_path, query_date):
         "peak_time": max_row['time'],
         "min": min_row['load'],
         "min_time": min_row['time']
+    }
+
+def get_incomers_peak_min(db_path, query_date):
+    """
+    Returns a dict with incomers max and min load (INCOMER I + INCOMER II) and their times for the given table/date.
+    """
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+    # Get all INCOMER I and INCOMER II total current by time
+    cursor.execute(f"""
+        SELECT timeobserved, SUM(current) as total_load
+        FROM sosht
+        WHERE dateobserved = ?
+          AND feedercode IN ('INCOMER I', 'INCOMER II')
+        GROUP BY timeobserved
+        ORDER BY timeobserved
+    """,  (query_date,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        return {
+            "peak": None,
+            "peak_time": None,
+            "min": None,
+            "min_time": None
+        }
+
+    max_row = max(rows, key=lambda x: x['total_load'])
+    min_row = min(rows, key=lambda x: x['total_load'])
+
+    return {
+        "peak": max_row['total_load'],
+        "peak_time": max_row['timeobserved'],
+        "min": min_row['total_load'],
+        "min_time": min_row['timeobserved']
     }

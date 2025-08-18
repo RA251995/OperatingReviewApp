@@ -7,7 +7,7 @@ from routes.db_service import get_connection
 
 def get_station_load(date_str, time_str, db_path):
     """
-    Calculates station load as the difference in 'current' between '1PLPM' and '1PMKJ'
+    Calculates station load on 110 kV side as the difference in 'current' between '1PLPM' and '1PMKJ'
 
     Args:
         date_str (str): Date in 'dd-mm-yyyy' format.
@@ -33,3 +33,4 @@ def get_station_load(date_str, time_str, db_path):
     if '1PLPM' in rows and '1PMKJ' in rows:
         return rows['1PLPM'] - rows['1PMKJ']
     return None
+

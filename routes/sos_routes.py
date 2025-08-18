@@ -11,7 +11,7 @@ from utils.date_utils import format_date, generate_allowed_times, get_closest_al
 from analysis.emc_export_diff import get_em_diff
 from analysis.station_load import get_station_load
 from analysis.abc_details import get_abc_details
-from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min
+from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
 
 # Create a Blueprint for SOS routes
 sos_bp = Blueprint('sos', __name__)
@@ -88,6 +88,7 @@ def daily_review_load():
     eht_data = None
     tf_data = None
     station_peak_min = None
+    incomers_peak_min = None
 
     if request.method == "POST":
         selected_date = request.form.get("date")
@@ -101,6 +102,7 @@ def daily_review_load():
     tf_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="sostf", db_code_column="tfcode")
 
     station_peak_min = get_station_peak_min(current_app.config['DATABASE'], query_date)
+    incomers_peak_min = get_incomers_peak_min(current_app.config['DATABASE'], query_date)
 
     return render_template(
         "daily_review_load.html",
@@ -108,7 +110,8 @@ def daily_review_load():
         ht_data=ht_data,
         eht_data=eht_data,
         tf_data=tf_data,
-        station_peak_min=station_peak_min
+        station_peak_min=station_peak_min,
+        incomers_peak_min=incomers_peak_min
     )
 
 # Daily energy review route
