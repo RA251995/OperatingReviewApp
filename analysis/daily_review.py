@@ -3,6 +3,7 @@ Module to calculate daily min and max current values for feeders, EHT, and trans
 """
 
 from routes.db_service import get_connection
+from datetime import datetime, timedelta
 
 def get_daily_current_stat(db_path, query_date, db_table="sosht", db_code_column="feedercode"):
     """
@@ -64,31 +65,96 @@ def get_daily_em_diff_stat(db_path, query_date, db_table="sosht", db_code_column
     """
     Returns a list of dicts with code, min/max Δ EM Import/Export and their times for a given date.
     """
-    from analysis.emc_export_diff import get_em_diff
-    # Get all allowed times for the day (e.g., 00:00 to 24:00)
+
+    # Prepare all times for the day
     allowed_times = [f"{h:02d}:00" for h in range(1, 25)]
+
+    # Calculate previous date for 01:00
+    prev_date_dt = datetime.strptime(query_date, "%d-%m-%Y") - timedelta(days=1)
+    prev_date_str = prev_date_dt.strftime("%d-%m-%Y")
+
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+
+    # Fetch all rows for current date and previous date 24:00
+    cursor.execute(f"""
+        SELECT {db_code_column}, dateobserved, timeobserved, emc_export, emc_import, current
+        FROM {db_table}
+        WHERE (dateobserved = ? AND timeobserved IN ({','.join(['?']*24)}))
+           OR (dateobserved = ? AND timeobserved = '24:00')
+    """, (query_date, *allowed_times, prev_date_str))
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Organize data: {(date, time, code): row}
+    data = {}
+    for row in rows:
+        key = (row['dateobserved'], row['timeobserved'], row[db_code_column])
+        data[key] = row
+
+    # For each hour, calculate delta using current and previous hour
     all_rows = []
-    for time in allowed_times:
-        rows = get_em_diff(query_date, time, db_path, db_table, db_code_column)
-        # Ensure each row has the correct time
-        for row in rows:
-            if 'time' not in row or row['time'] is None:
-                row['time'] = time
-        all_rows.extend(rows)
-    # Group by code
+    for i, time in enumerate(allowed_times):
+        if time == "01:00":
+            prev_time = "24:00"
+            prev_date = prev_date_str
+        else:
+            prev_time = f"{int(time[:2])-1:02d}:00"
+            prev_date = query_date
+
+        for code in set(row[db_code_column] for row in rows):
+            curr_key = (query_date, time, code)
+            prev_key = (prev_date, prev_time, code)
+            curr_row = data.get(curr_key)
+            prev_row = data.get(prev_key)
+
+            # Only process if both rows exist and currents are >0
+            if curr_row and prev_row and curr_row['current'] > 0 and prev_row['current'] > 0:
+                # Helper for decimal places
+                def max_decimal_places(a, b):
+                    def count_decimals(x):
+                        s = str(x)
+                        if '.' in s:
+                            return len(s.split('.')[-1])
+                        return 0
+                    return max(count_decimals(a), count_decimals(b))
+
+                # Import
+                digits = max_decimal_places(curr_row['emc_import'], prev_row['emc_import'])
+                delta_import = round(curr_row['emc_import'] - prev_row['emc_import'], digits)
+                # Export
+                digits = max_decimal_places(curr_row['emc_export'], prev_row['emc_export'])
+                delta_export = round(curr_row['emc_export'] - prev_row['emc_export'], digits)
+            else:
+                delta_import = None
+                delta_export = None
+
+            if curr_row:
+                all_rows.append({
+                    'code': code,
+                    'delta_emc_import': delta_import,
+                    'delta_emc_export': delta_export,
+                    'time': time
+                })
+
+    # Collect feeder order as they appear in the data
+    feeder_order = []
+    seen = set()
+    for row in rows:
+        code = row[db_code_column]
+        if code not in seen:
+            feeder_order.append(code)
+            seen.add(code)
+
+    # Group by code and find min/max
     codes = {}
     for row in all_rows:
         code = row['code']
-        if code not in codes:
-            codes[code] = []
-        codes[code].append({
-            'delta_emc_import': row['delta_emc_import'],
-            'delta_emc_export': row['delta_emc_export'],
-            'time': row.get('time', None) or time  # fallback to time if not present
-        })
+        codes.setdefault(code, []).append(row)
+
     result = []
-    for code, values in codes.items():
-        # Filter out None values for min/max
+    for code in feeder_order:  # Use the collected order
+        values = codes.get(code, [])
         import_vals = [v for v in values if v['delta_emc_import'] is not None]
         export_vals = [v for v in values if v['delta_emc_export'] is not None]
         if import_vals:
