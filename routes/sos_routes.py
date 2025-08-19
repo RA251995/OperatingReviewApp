@@ -80,6 +80,30 @@ def abc_details():
         abc_details=abc_details
     )
 
+# Daily review summary route
+@sos_bp.route("/daily-review-summary", methods=["GET", "POST"])
+def daily_review_summary():
+    selected_date = None
+    station_peak_min = None
+    incomers_peak_min = None
+
+    if request.method == "POST":
+        selected_date = request.form.get("date")
+    else:
+        selected_date = get_previous_date()
+
+    query_date = format_date(selected_date)
+
+    station_peak_min = get_station_peak_min(current_app.config['DATABASE'], query_date)
+    incomers_peak_min = get_incomers_peak_min(current_app.config['DATABASE'], query_date)
+
+    return render_template(
+        "daily_review_summary.html",
+        selected_date=selected_date,
+        station_peak_min=station_peak_min,
+        incomers_peak_min=incomers_peak_min
+    )
+
 # Daily load review route
 @sos_bp.route("/daily-review-load", methods=["GET", "POST"])
 def daily_review_load():
@@ -87,8 +111,6 @@ def daily_review_load():
     ht_data = None
     eht_data = None
     tf_data = None
-    station_peak_min = None
-    incomers_peak_min = None
 
     if request.method == "POST":
         selected_date = request.form.get("date")
@@ -101,17 +123,12 @@ def daily_review_load():
     eht_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="soseht", db_code_column="feedercode")
     tf_data = get_daily_current_stat(current_app.config['DATABASE'], query_date, db_table="sostf", db_code_column="tfcode")
 
-    station_peak_min = get_station_peak_min(current_app.config['DATABASE'], query_date)
-    incomers_peak_min = get_incomers_peak_min(current_app.config['DATABASE'], query_date)
-
     return render_template(
         "daily_review_load.html",
         selected_date=selected_date,
         ht_data=ht_data,
         eht_data=eht_data,
-        tf_data=tf_data,
-        station_peak_min=station_peak_min,
-        incomers_peak_min=incomers_peak_min
+        tf_data=tf_data
     )
 
 # Daily energy review route

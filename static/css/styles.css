@@ -54,6 +54,7 @@ footer {
     border-radius: 6px;
     font-weight: bold;
     transition: background-color 0.2s ease-in-out;
+    text-align: center;
 }
 
 .btn:hover {
@@ -149,7 +150,7 @@ footer {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 300px;
+    max-width: 600px;
     margin: 28px auto 0 auto; /* Add top margin to separate from heading */
 }
 

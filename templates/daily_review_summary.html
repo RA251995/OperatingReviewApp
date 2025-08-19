@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="header-flex">
+  <a href="{{ url_for('sos.index') }}" class="btn home-btn" title="Home">
+    <img src="{{ url_for('static', filename='images/home.png') }}" alt="Home" class="home-icon">
+  </a>
+  <h2 class="center-heading">Daily Operating Review</h2>
+</div>
+
+<form method="POST" class="review-form">
+  <label>Date:
+    <input type="date" name="date" value="{{ selected_date }}" required class="input-date">
+  </label>
+  <button type="submit" class="btn">Show Details</button>
+</form>
+
+<div class="tables-flex">
+  <!-- Current statistics -->
+  <div class="table-block">
+
+    <table border="1">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Value</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Station Peak on 110 kV (A)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.peak is not none %}
+              {{ station_peak_min.peak }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.peak_time %}
+              {{ station_peak_min.peak_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Min Load on 110 kV (A)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.min is not none %}
+              {{ station_peak_min.min }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.min_time %}
+              {{ station_peak_min.min_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Max Voltage on 110 kV (kV)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.max_voltage is not none %}
+              {{ station_peak_min.max_voltage }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.max_voltage_time %}
+              {{ station_peak_min.max_voltage_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Min Voltage on 110 kV (kV)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.min_voltage is not none %}
+              {{ station_peak_min.min_voltage }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.min_voltage_time %}
+              {{ station_peak_min.min_voltage_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Station Peak on 11 kV (A)</td>
+          <td>
+            {% if incomers_peak_min and incomers_peak_min.peak is not none %}
+              {{ incomers_peak_min.peak }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if incomers_peak_min and incomers_peak_min.peak_time %}
+              {{ incomers_peak_min.peak_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Min Load on 11 kV (A)</td>
+          <td>
+            {% if incomers_peak_min and incomers_peak_min.min is not none %}
+              {{ incomers_peak_min.min }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if incomers_peak_min and incomers_peak_min.min_time %}
+              {{ incomers_peak_min.min_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Max Voltage on 11 kV (kV)</td>
+          <td>
+            {% if incomers_peak_min and incomers_peak_min.max_voltage is not none %}
+              {{ incomers_peak_min.max_voltage }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if incomers_peak_min and incomers_peak_min.max_voltage_time %}
+              {{ incomers_peak_min.max_voltage_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Min Voltage on 11 kV (kV)</td>
+          <td>
+            {% if incomers_peak_min and incomers_peak_min.min_voltage is not none %}
+              {{ incomers_peak_min.min_voltage }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if incomers_peak_min and incomers_peak_min.min_voltage_time %}
+              {{ incomers_peak_min.min_voltage_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Peak load on PLPM (A)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.plpm_max_load is not none %}
+              {{ station_peak_min.plpm_max_load }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.plpm_max_load_time %}
+              {{ station_peak_min.plpm_max_load_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Peak Load on PMKJ (A)</td>
+          <td>
+            {% if station_peak_min and station_peak_min.pmkj_max_load is not none %}
+              {{ station_peak_min.pmkj_max_load }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if station_peak_min and station_peak_min.pmkj_max_load_time %}
+              {{ station_peak_min.pmkj_max_load_time }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+{% endblock %}
