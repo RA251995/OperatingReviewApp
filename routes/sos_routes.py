@@ -10,8 +10,9 @@ from flask import Blueprint, render_template, request, current_app
 from utils.date_utils import format_date, generate_allowed_times, get_closest_allowed_datetime, get_previous_month, get_previous_date
 from analysis.emc_export_diff import get_em_diff
 from analysis.station_load import get_station_load
-from analysis.abc_details import get_abc_details
 from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
+from analysis.mor_energy import get_monthly_ht_energy
+from analysis.abc_details import get_abc_details
 
 # Create a Blueprint for SOS routes
 sos_bp = Blueprint('sos', __name__)
@@ -56,28 +57,6 @@ def hourly_review():
         selected_date=selected_date,
         selected_time=selected_time,
         allowed_times=allowed_times
-    )
-
-# ABC Feeder Details route
-@sos_bp.route("/abc-details", methods=["GET", "POST"])
-def abc_details():
-    # Get previous month in YYYY-MM format using utility function
-    default_month = get_previous_month()
-
-    selected_month = default_month
-    abc_details = None
-
-    if request.method == "POST":
-        selected_month = request.form.get("month", selected_month)
-        abc_details = get_abc_details(current_app.config['DATABASE'], selected_month)
-    else:
-        # Show previous month by default
-        abc_details = get_abc_details(current_app.config['DATABASE'], selected_month)
-
-    return render_template(
-        "abc_details.html",
-        selected_month=selected_month,
-        abc_details=abc_details
     )
 
 # Daily review summary route
@@ -156,4 +135,40 @@ def daily_review_energy():
         ht_em_diff=ht_em_diff,
         eht_em_diff=eht_em_diff,
         tf_em_diff=tf_em_diff
+    )
+
+@sos_bp.route("/mor-energy", methods=["GET", "POST"])
+def mor_energy():
+    ht_data = None
+
+    if request.method == "POST":
+        selected_month = request.form.get("month")
+    else:
+        selected_month = get_previous_month()
+    
+    ht_data = get_monthly_ht_energy(current_app.config['DATABASE'], selected_month)
+    
+    return render_template(
+        "mor_energy.html",
+        selected_month=selected_month,
+        ht_data=ht_data
+    )
+
+# ABC Feeder Details route
+@sos_bp.route("/abc-details", methods=["GET", "POST"])
+def abc_details():
+    abc_details = None
+
+    if request.method == "POST":
+        selected_month = request.form.get("month")
+    else:
+        # Show previous month by default
+        selected_month = get_previous_month()
+    
+    abc_details = get_abc_details(current_app.config['DATABASE'], selected_month)
+
+    return render_template(
+        "abc_details.html",
+        selected_month=selected_month,
+        abc_details=abc_details
     )

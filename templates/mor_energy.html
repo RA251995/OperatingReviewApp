@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="header-flex">
+  <a href="{{ url_for('sos.index') }}" class="btn home-btn" title="Home">
+    <img src="{{ url_for('static', filename='images/home.png') }}" alt="Home" class="home-icon">
+  </a>
+  <h2 class="center-heading">MOR - Monthly Energy Transaction</h2>
+</div>
+
+<form method="POST" class="review-form">
+  <label>Month:
+    <input type="month" name="month" value="{{ selected_month }}" required class="input-month">
+  </label>
+  <button type="submit" class="btn">Show Details</button>
+</form>
+
+<div class="tables-flex">
+  <div class="table-block">
+    <h3>HT Feeders - Monthly Energy Transaction</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Feeder Code</th>
+          <th>Initial Export</th>
+          <th>Final Export</th>
+          <th>MF Export</th>
+          <th>Actual Export Energy</th>
+          <th>Initial Import</th>
+          <th>Final Import</th>
+          <th>MF Import</th>
+          <th>Actual Import Energy</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if ht_data and ht_data|length > 0 %}
+          {% for row in ht_data %}
+          <tr>
+            <td>{{ row.feedercode }}</td>
+            <td>{{ row.initial_export if row.initial_export is not none else 'N/A' }}</td>
+            <td>{{ row.final_export if row.final_export is not none else 'N/A' }}</td>
+            <td>{{ row.mf_export if row.mf_export is not none else 'N/A' }}</td>
+            <td>{{ row.actual_export_energy if row.actual_export_energy is not none else 'N/A' }}</td>
+            <td>{{ row.initial_import if row.initial_import is not none else 'N/A' }}</td>
+            <td>{{ row.final_import if row.final_import is not none else 'N/A' }}</td>
+            <td>{{ row.mf_import if row.mf_import is not none else 'N/A' }}</td>
+            <td>{{ row.actual_import_energy if row.actual_import_energy is not none else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
