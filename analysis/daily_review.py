@@ -224,7 +224,7 @@ def get_station_peak_min(db_path, query_date):
         FROM soseht
         WHERE dateobserved = ?
           AND feedercode IN ('1PLPM', '1PMKJ')
-          AND voltage IS NOT NULL
+          AND voltage >= 0
     """, (query_date,))
     voltage_rows = cursor.fetchall()
     conn.close()
@@ -298,7 +298,7 @@ def get_incomers_peak_min(db_path, query_date):
         FROM sosht
         WHERE dateobserved = ?
           AND feedercode IN ('INCOMER I', 'INCOMER II')
-          AND voltage IS NOT NULL
+          AND voltage >= 0
     """, (query_date,))
     voltage_rows = cursor.fetchall()
     conn.close()
