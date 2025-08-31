@@ -158,6 +158,8 @@ class AutoReloadManager {
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('/hourly-review') || 
         window.location.pathname.includes('/daily-review') || 
+        window.location.pathname.includes('/mor-energy') || 
+        window.location.pathname.includes('/mor-interruptions') || 
         window.location.pathname.includes('/abc-details')) {
         window.autoReloadManager = new AutoReloadManager();
     }

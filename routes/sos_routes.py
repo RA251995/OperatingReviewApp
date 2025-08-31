@@ -11,7 +11,7 @@ from utils.date_utils import format_date, generate_allowed_times, get_closest_al
 from analysis.emc_export_diff import get_em_diff
 from analysis.station_load import get_station_load
 from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
-from analysis.mor_energy import get_monthly_ht_energy
+from analysis.monthly_review import get_monthly_eht_interruptions, get_monthly_eht_interruptions_summary, get_monthly_ht_energy
 from analysis.abc_details import get_abc_details
 
 # Create a Blueprint for SOS routes
@@ -152,6 +152,25 @@ def mor_energy():
         "mor_energy.html",
         selected_month=selected_month,
         ht_data=ht_data
+    )
+
+@sos_bp.route("/mor-interruptions", methods=["GET", "POST"])
+def mor_interruptions():
+    eht_data = None
+
+    if request.method == "POST":
+        selected_month = request.form.get("month")
+    else:
+        selected_month = get_previous_month()
+    
+    eht_data = get_monthly_eht_interruptions(current_app.config['DATABASE'], selected_month)
+    eht_data_summary = get_monthly_eht_interruptions_summary(eht_data, selected_month)
+    
+    return render_template(
+        "mor_interruptions.html",
+        selected_month=selected_month,
+        eht_data=eht_data,
+        eht_data_summary=eht_data_summary
     )
 
 # ABC Feeder Details route
