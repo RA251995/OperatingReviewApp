@@ -145,6 +145,136 @@
         {% endif %}
       </tbody>
     </table>
+
+    <h3>Transformer Interruptions</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Transformer Code</th>
+          <th>Outage Time</th>
+          <th>Restoration Time</th>
+          <th>Duration in min(hh:mm)</th>
+          <th>Attributable to</th>
+          <th>Outage Type</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tf_data and tf_data|length > 0 %}
+          {% for row in tf_data %}
+          <tr>
+            <td>{{ row.feedercode }}</td>
+            <td>{{ row.started }}</td>
+            <td>{{ row.ended }}</td>
+            <td>
+              {{ row.duration }}
+              {% if row.duration is not none %}
+                (
+                {% set h = row.duration // 60 %}
+                {% set m = row.duration % 60 %}
+                {{ "%02d:%02d"|format(h, m) }}
+                )
+              {% endif %}
+            </td>
+            <td>{{ row.attributed_to if row.attributed_to else 'N/A' }}</td>
+             <td>{{ row.type if row.type else 'N/A' }}</td>
+            <td>
+              {{ row.remarks if row.remarks else 'N/A' }}
+              {% if row.relays %}
+                <br><span style="color: #ff9999;">Relay Operated: {{ row.relays }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <h3>Transformer Interruption Summary</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th rowspan="2">Transformer Code</th>
+          <th colspan="5">Duration in min(hh:mm)</th>
+          <th rowspan="2">Availability (%)</th>
+        </tr>
+        <tr>
+          <th>KSEBL</th>
+          <th>Other</th>
+          <th>Scheduled</th>
+          <th>Unscheduled</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tf_data_summary and tf_data_summary|length > 0 %}
+          {% for row in tf_data_summary %}
+          <tr>
+            <td>{{ row.feedercode }}</td>
+            <td>
+              {{ row.ksebl_duration }}
+              {% if row.ksebl_duration is not none %}
+                (
+                {% set h = row.ksebl_duration // 60 %}
+                {% set m = row.ksebl_duration % 60 %}
+                {{ "%02d:%02d"|format(h, m) }}
+                )
+              {% endif %}
+            </td>
+            <td>
+              {{ row.others_duration }}
+              {% if row.others_duration is not none %}
+                (
+                {% set h = row.others_duration // 60 %}
+                {% set m = row.others_duration % 60 %}
+                {{ "%02d:%02d"|format(h, m) }}
+                )
+              {% endif %}
+            </td>
+            <td>
+              {{ row.scheduled_duration }}
+              {% if row.scheduled_duration is not none %}
+                (
+                {% set h = row.scheduled_duration // 60 %}
+                {% set m = row.scheduled_duration % 60 %}
+                {{ "%02d:%02d"|format(h, m) }}
+                )
+              {% endif %}
+            </td>
+            <td>
+              {{ row.unscheduled_duration }}
+              {% if row.unscheduled_duration is not none %}
+                (
+                {% set h = row.unscheduled_duration // 60 %}
+                {% set m = row.unscheduled_duration % 60 %}
+                {{ "%02d:%02d"|format(h, m) }}
+                )
+              {% endif %}
+            </td>
+            <td>
+              {{ row.total_duration }}
+              {% if row.total_duration is not none %}
+                (
+                {% set h = row.total_duration // 60 %}
+                {% set m = row.total_duration % 60 %}
+                {{ "%02d:%02d"|format(h, m) }}
+                )
+              {% endif %}
+            </td>
+            <td>{{ row.availability_percent }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
   </div>
 </div>
 

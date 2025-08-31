@@ -73,8 +73,8 @@ def get_monthly_ht_energy(db_path, year_month):
         mf_export = mf_export_fr if mf_export_fr is not None else mf_export_ir
         mf_import = mf_import_fr if mf_import_fr is not None else mf_import_ir
 
-        actual_export_energy = round((fr_export - ir_export) * mf_export) if (fr_export is not None and ir_export is not None and mf_export is not None) else None
-        actual_import_energy = round((fr_import - ir_import) * mf_import) if (fr_import is not None and ir_import is not None and mf_import is not None) else None
+        actual_export_energy = round((fr_export - ir_export) * mf_export, 2) if (fr_export is not None and ir_export is not None and mf_export is not None) else None
+        actual_import_energy = round((fr_import - ir_import) * mf_import, 2) if (fr_import is not None and ir_import is not None and mf_import is not None) else None
 
         result.append({
             'feedercode': code,
@@ -91,7 +91,7 @@ def get_monthly_ht_energy(db_path, year_month):
     conn.close()
     return result
 
-def get_monthly_eht_interruptions(db_path, year_month):
+def get_monthly_interruptions(db_path, year_month, fdrtype):
     """
     Returns a list of interruptions for the given month with required details.
 
@@ -127,10 +127,10 @@ def get_monthly_eht_interruptions(db_path, year_month):
     cursor.execute("""
         SELECT feedercode, started, datefrom, dateto, ended, responsibleby, remarks, relays, belongsto
         FROM intrpns
-        WHERE fdrtype = 'EHT'
+        WHERE fdrtype = ?
           AND started >= ? AND started < ?
         ORDER BY started
-    """, (first_day.strftime("%Y-%m-%d %H:%M:%S"), next_month.strftime("%Y-%m-%d %H:%M:%S")))
+    """, (fdrtype, first_day.strftime("%Y-%m-%d %H:%M:%S"), next_month.strftime("%Y-%m-%d %H:%M:%S")))
     rows = cursor.fetchall()
     conn.close()
 
@@ -162,12 +162,12 @@ def get_monthly_eht_interruptions(db_path, year_month):
         })
     return result
 
-def get_monthly_eht_interruptions_summary(eht_interruptions, year_month):
+def get_monthly_interruptions_summary(interruptions, year_month):
     """
     Returns a summary of interruptions by feeder code.
 
     Args:
-        eht_interruptions (list of dict): List of interruptions as returned by get_monthly_eht_interruptions.
+        interruptions (list of dict): List of interruptions as returned by get_monthly_eht_interruptions.
         year_month (str): Month in 'YYYY-MM' format.
 
     Returns:
@@ -183,7 +183,7 @@ def get_monthly_eht_interruptions_summary(eht_interruptions, year_month):
             }
     """
     summary_dict = {}
-    for row in eht_interruptions:
+    for row in interruptions:
         code = row['feedercode']
         if code not in summary_dict:
             summary_dict[code] = {
