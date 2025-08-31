@@ -11,7 +11,7 @@ from utils.date_utils import format_date, generate_allowed_times, get_closest_al
 from analysis.emc_export_diff import get_em_diff
 from analysis.station_load import get_station_load
 from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
-from analysis.monthly_review import get_monthly_interruptions, get_monthly_interruptions_summary, get_monthly_ht_energy
+from analysis.monthly_review import get_monthly_interruptions, get_monthly_interruptions_summary, get_monthly_energy
 from analysis.abc_details import get_abc_details
 
 # Create a Blueprint for SOS routes
@@ -146,12 +146,16 @@ def mor_energy():
     else:
         selected_month = get_previous_month()
     
-    ht_data = get_monthly_ht_energy(current_app.config['DATABASE'], selected_month)
-    
+    ht_data = get_monthly_energy(current_app.config['DATABASE'], selected_month, db_table="sosht", db_code_column="feedercode")
+    eht_data = get_monthly_energy(current_app.config['DATABASE'], selected_month, db_table="soseht", db_code_column="feedercode")
+    tf_data = get_monthly_energy(current_app.config['DATABASE'], selected_month, db_table="sostf", db_code_column="tfcode")
+
     return render_template(
         "mor_energy.html",
         selected_month=selected_month,
-        ht_data=ht_data
+        ht_data=ht_data,
+        eht_data=eht_data,
+        tf_data=tf_data
     )
 
 @sos_bp.route("/mor-interruptions", methods=["GET", "POST"])

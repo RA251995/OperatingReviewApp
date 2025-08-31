@@ -16,7 +16,83 @@
 
 <div class="tables-flex">
   <div class="table-block">
-    <h3>HT Feeders - Monthly Energy Transaction</h3>
+    <h3>EHT Feeders</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Feeder Code</th>
+          <th>Initial Export</th>
+          <th>Final Export</th>
+          <th>MF Export</th>
+          <th>Actual Export Energy</th>
+          <th>Initial Import</th>
+          <th>Final Import</th>
+          <th>MF Import</th>
+          <th>Actual Import Energy</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if eht_data and eht_data|length > 0 %}
+          {% for row in eht_data %}
+          <tr>
+            <td>{{ row.code }}</td>
+            <td>{{ row.initial_export if row.initial_export is not none else 'N/A' }}</td>
+            <td>{{ row.final_export if row.final_export is not none else 'N/A' }}</td>
+            <td>{{ row.mf_export if row.mf_export is not none else 'N/A' }}</td>
+            <td>{{ row.actual_export_energy if row.actual_export_energy is not none else 'N/A' }}</td>
+            <td>{{ row.initial_import if row.initial_import is not none else 'N/A' }}</td>
+            <td>{{ row.final_import if row.final_import is not none else 'N/A' }}</td>
+            <td>{{ row.mf_import if row.mf_import is not none else 'N/A' }}</td>
+            <td>{{ row.actual_import_energy if row.actual_import_energy is not none else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <h3>Transformers</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Transformer Code</th>
+          <th>Initial Export</th>
+          <th>Final Export</th>
+          <th>MF Export</th>
+          <th>Actual Export Energy</th>
+          <th>Initial Import</th>
+          <th>Final Import</th>
+          <th>MF Import</th>
+          <th>Actual Import Energy</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tf_data and tf_data|length > 0 %}
+          {% for row in tf_data %}
+          <tr>
+            <td>{{ row.code }}</td>
+            <td>{{ row.initial_export if row.initial_export is not none else 'N/A' }}</td>
+            <td>{{ row.final_export if row.final_export is not none else 'N/A' }}</td>
+            <td>{{ row.mf_export if row.mf_export is not none else 'N/A' }}</td>
+            <td>{{ row.actual_export_energy if row.actual_export_energy is not none else 'N/A' }}</td>
+            <td>{{ row.initial_import if row.initial_import is not none else 'N/A' }}</td>
+            <td>{{ row.final_import if row.final_import is not none else 'N/A' }}</td>
+            <td>{{ row.mf_import if row.mf_import is not none else 'N/A' }}</td>
+            <td>{{ row.actual_import_energy if row.actual_import_energy is not none else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="9" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <h3>HT Feeders</h3>
     <table border="1">
       <thead>
         <tr>
@@ -35,7 +111,7 @@
         {% if ht_data and ht_data|length > 0 %}
           {% for row in ht_data %}
           <tr>
-            <td>{{ row.feedercode }}</td>
+            <td>{{ row.code }}</td>
             <td>{{ row.initial_export if row.initial_export is not none else 'N/A' }}</td>
             <td>{{ row.final_export if row.final_export is not none else 'N/A' }}</td>
             <td>{{ row.mf_export if row.mf_export is not none else 'N/A' }}</td>

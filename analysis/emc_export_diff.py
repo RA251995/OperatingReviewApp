@@ -4,6 +4,7 @@ for hourly operating review.
 """
 
 from datetime import datetime, timedelta
+from analysis.utils import max_decimal_places
 from routes.db_service import get_connection
 
 
@@ -79,15 +80,6 @@ def get_em_diff(date_str, time_str, db_path, db_table, db_code_column="feedercod
         prev_export = previous_export_data.get(feeder)
         prev_import = previous_import_data.get(feeder)
         prev_current = previous_current_data.get(feeder)
-
-        # Helper function to get max decimal places between two numbers
-        def max_decimal_places(a, b):
-            def count_decimals(x):
-                s = str(x)
-                if '.' in s:
-                    return len(s.split('.')[-1])
-                return 0
-            return max(count_decimals(a), count_decimals(b))
 
         # Calculate export difference if hourly and both current and previous values are available (>0)
         if (str(time_str).endswith(":00")
