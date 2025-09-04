@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="header-flex">
+  <a href="{{ url_for('sos.index') }}" class="btn home-btn" title="Home">
+    <img src="{{ url_for('static', filename='images/home.png') }}" alt="Home" class="home-icon">
+  </a>
+  <h2 class="center-heading">MOR - HT Interruptions</h2>
+</div>
+
+<form method="POST" class="review-form">
+  <label>Month:
+    <input type="month" name="month" value="{{ selected_month }}" required class="input-month">
+  </label>
+  <button type="submit" class="btn">Show Details</button>
+</form>
+
+<div class="tables-flex">
+  <div class="table-block">
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Feeder Code</th>
+          <th>Scheduled Duration (min)</th>
+          <th>Scheduled Count</th>
+          <th>Unscheduled Duration (min)</th>
+          <th>Unscheduled Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if ht_data and ht_data|length > 0 %}
+          {% for row in ht_data %}
+          <tr>
+            <td>{{ row.feedercode }}</td>
+            <td>{{ row.scheduled_duration }}</td>
+            <td>{{ row.scheduled_count }}</td>
+            <td>{{ row.unscheduled_duration }}</td>
+            <td>{{ row.unscheduled_count }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center;">No data available</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

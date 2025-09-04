@@ -11,7 +11,7 @@ from utils.date_utils import format_date, generate_allowed_times, get_closest_al
 from analysis.emc_export_diff import get_em_diff
 from analysis.station_load import get_station_load
 from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
-from analysis.monthly_review import get_monthly_interruptions, get_monthly_interruptions_summary, get_monthly_energy
+from analysis.monthly_review import get_eht_tf_monthly_interruptions, get_eht_tf_monthly_interruptions_summary, get_ht_monthly_interruptions_summary, get_monthly_energy
 from analysis.abc_details import get_abc_details
 
 # Create a Blueprint for SOS routes
@@ -158,8 +158,8 @@ def mor_energy():
         tf_data=tf_data
     )
 
-@sos_bp.route("/mor-interruptions", methods=["GET", "POST"])
-def mor_interruptions():
+@sos_bp.route("/mor-eht-tf-interruptions", methods=["GET", "POST"])
+def mor_eht_tf_interruptions():
     eht_data = None
 
     if request.method == "POST":
@@ -167,19 +167,36 @@ def mor_interruptions():
     else:
         selected_month = get_previous_month()
     
-    eht_data = get_monthly_interruptions(current_app.config['DATABASE'], selected_month, 'EHT')
-    eht_data_summary = get_monthly_interruptions_summary(eht_data, selected_month)
+    eht_data = get_eht_tf_monthly_interruptions(current_app.config['DATABASE'], selected_month, 'EHT')
+    eht_data_summary = get_eht_tf_monthly_interruptions_summary(eht_data, selected_month)
 
-    tf_data = get_monthly_interruptions(current_app.config['DATABASE'], selected_month, 'T/F')
-    tf_data_summary = get_monthly_interruptions_summary(tf_data, selected_month)
+    tf_data = get_eht_tf_monthly_interruptions(current_app.config['DATABASE'], selected_month, 'T/F')
+    tf_data_summary = get_eht_tf_monthly_interruptions_summary(tf_data, selected_month)
     
     return render_template(
-        "mor_interruptions.html",
+        "mor_eht_tf_interruptions.html",
         selected_month=selected_month,
         eht_data=eht_data,
         eht_data_summary=eht_data_summary,
         tf_data=tf_data,
         tf_data_summary=tf_data_summary
+    )
+
+@sos_bp.route("/mor-ht-interruptions", methods=["GET", "POST"])
+def mor_ht_interruptions():
+    eht_data = None
+
+    if request.method == "POST":
+        selected_month = request.form.get("month")
+    else:
+        selected_month = get_previous_month()
+    
+    ht_data = get_ht_monthly_interruptions_summary(current_app.config['DATABASE'], selected_month) 
+    
+    return render_template(
+        "mor_ht_interruptions.html",
+        selected_month=selected_month,
+        ht_data=ht_data
     )
 
 # ABC Feeder Details route

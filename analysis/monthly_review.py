@@ -101,7 +101,7 @@ def get_monthly_energy(db_path, year_month, db_table="sosht", db_code_column="fe
     conn.close()
     return result
 
-def get_monthly_interruptions(db_path, year_month, fdrtype):
+def get_eht_tf_monthly_interruptions(db_path, year_month, fdrtype):
     """
     Returns a list of interruptions for the given month with required details.
 
@@ -172,7 +172,7 @@ def get_monthly_interruptions(db_path, year_month, fdrtype):
         })
     return result
 
-def get_monthly_interruptions_summary(interruptions, year_month):
+def get_eht_tf_monthly_interruptions_summary(interruptions, year_month):
     """
     Returns a summary of interruptions by feeder code.
 
@@ -227,3 +227,92 @@ def get_monthly_interruptions_summary(interruptions, year_month):
     # Convert to list
     summary_list = list(summary_dict.values())
     return summary_list
+
+def get_ht_monthly_interruptions_summary(db_path, year_month):
+    """
+    Returns a summary of HT interruptions for the given month, grouped by feedercode,
+    with scheduled and unscheduled counts durations.
+
+    Args:
+        db_path (str): Path to the SQLite database.
+        year_month (str): Month in 'YYYY-MM' format.
+
+    Returns:
+        list of dict: Each dict contains:
+            {
+                'feedercode': ...,
+                'scheduled_duration': ...,
+                'unscheduled_duration': ...,
+                'scheduled_count': ...,
+                'unscheduled_count': ...,
+            }
+    """
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+
+    query = """
+    WITH grouped AS (
+        SELECT 
+            feedercode,
+            belongsto,
+            grpslno,
+            SUM(duration) AS group_duration
+        FROM intrpns
+        WHERE strftime('%Y-%m', started) = ? AND fdrtype = 'HTs'
+        GROUP BY feedercode, belongsto, grpslno
+    )
+    SELECT 
+        feedercode,
+        belongsto,
+        COUNT(*) AS interruption_count,
+        SUM(group_duration) AS total_duration
+    FROM grouped
+    GROUP BY feedercode, belongsto;
+    """
+    cursor.execute(query, (year_month,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    result = {}
+    for row in rows:
+        feedercode = row['feedercode']
+
+        if feedercode not in result:
+            result[feedercode] = {
+                'feedercode': feedercode,
+                'scheduled_duration': 0,
+                'unscheduled_duration': 0,
+                'scheduled_count': 0,
+                'unscheduled_count': 0
+            }
+        
+        if row['belongsto'] == "Scheduled":
+            result[feedercode]['scheduled_duration'] = row['total_duration']
+            result[feedercode]['scheduled_count'] = row['interruption_count']
+        elif row['belongsto'] == "Un Scheduled":
+            result[feedercode]['unscheduled_duration'] = row['total_duration']
+            result[feedercode]['unscheduled_count'] = row['interruption_count']
+
+    order_list = get_feeder_order(db_path)
+    result = sorted(
+        result.values(),
+        key=lambda x: order_list.index(x['feedercode']) if x['feedercode'] in order_list else len(order_list)
+    )
+
+    return result
+
+def get_feeder_order(db_path):
+    """
+    Fetches the feeder order from the feeder11kvmaster table.
+    
+    Args:
+        db_path (str): Path to the SQLite database.
+    Returns:
+        list: List of feedercode_11 in the order defined by feederorder.
+    """
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT feedercode_11 FROM feeder11kvmaster ORDER BY feederorder")
+    order_list = [row['feedercode_11'] for row in cursor.fetchall()]
+    conn.close()
+    return order_list
