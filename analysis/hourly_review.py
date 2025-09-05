@@ -1,10 +1,9 @@
 """
-Module to calculate energy meter export/import differences for feeders and transformers
-for hourly operating review.
+Module to calculate hourly EMC export/import differences and station load.
 """
 
 from datetime import datetime, timedelta
-from analysis.utils import max_decimal_places
+from analysis.utils import get_eht_feeder_order, get_tf_order, max_decimal_places, get_ht_feeder_order, sort_by_order
 from routes.db_service import get_connection
 
 
@@ -21,7 +20,15 @@ def get_em_diff(date_str, time_str, db_path, db_table, db_code_column="feedercod
         db_code_column (str): Column name for feeder/transformer code ('feedercode', 'tfcode').
 
     Returns:
-        list of dict: Each dict contains code, current, emc_export, emc_import, delta_emc_export, delta_emc_import.
+        list of dict: Each dict contains:
+            {
+                code: ...,
+                current: ...,
+                emc_export: ...,
+                emc_import: ...,
+                delta_emc_export: ...,
+                delta_emc_import: ...
+            }
     """
     # Connect to the database using shared service
     conn = get_connection(db_path)
@@ -106,5 +113,49 @@ def get_em_diff(date_str, time_str, db_path, db_table, db_code_column="feedercod
             'delta_emc_export': delta_export,
             'delta_emc_import': delta_import
         })
+    
+    # Sort result based on feeder/transformer order from master tables
+    code_order = []
+    if db_table == "sosht":
+        code_order = get_ht_feeder_order(db_path)
+    elif db_table == "soseht":
+        code_order = get_eht_feeder_order(db_path)
+    elif db_table == "sostf":
+        code_order = get_tf_order(db_path)
+    result = sort_by_order(result, 'code', code_order)
 
     return result
+
+def get_station_load(date_str, time_str, db_path):
+    """
+    Calculates station load on 110 kV side as the difference in 'current' between '1PLPM' and '1PMKJ'
+
+    Args:
+        date_str (str): Date in 'dd-mm-yyyy' format.
+        time_str (str): Time in 'HH:MM' format.
+        db_path (str): Path to the SQLite database.
+
+    Returns:
+        float or None: The station load (1PLPM - 1PMKJ) or None if data is missing.
+    """
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+    query = """
+        SELECT feedercode, current
+        FROM soseht
+        WHERE dateobserved = ?
+          AND timeobserved = ?
+          AND feedercode IN ('1PLPM', '1PMKJ')
+    """
+    cursor.execute(query, (date_str, time_str))
+    rows = {row['feedercode']: row['current'] for row in cursor.fetchall()}
+    conn.close()
+
+    if '1PLPM' in rows and '1PMKJ' in rows:
+        if rows['1PLPM'] < 0:
+            return rows['1PMKJ']
+        elif rows['1PMKJ'] < 0:
+            return rows['1PLPM']
+        return rows['1PLPM'] - rows['1PMKJ']
+    
+    return None

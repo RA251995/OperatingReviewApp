@@ -8,8 +8,7 @@ This module defines the blueprint and view functions for:
 
 from flask import Blueprint, render_template, request, current_app
 from utils.date_utils import format_date, generate_allowed_times, get_closest_allowed_datetime, get_previous_month, get_previous_date
-from analysis.emc_export_diff import get_em_diff
-from analysis.station_load import get_station_load
+from analysis.hourly_review import get_em_diff, get_station_load
 from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
 from analysis.monthly_review import get_eht_tf_monthly_interruptions, get_eht_tf_monthly_interruptions_summary, get_ht_monthly_interruptions_summary, get_monthly_energy
 from analysis.abc_details import get_abc_details
