@@ -154,6 +154,18 @@ footer {
     margin: 28px auto 0 auto; /* Add top margin to separate from heading */
 }
 
+.github-link {
+    color: white;
+    text-decoration: none;
+    background: none;
+    padding: 0;
+}
+
+.github-link:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
 @media (max-width: 900px) {
     .tables-flex {
         flex-direction: column;

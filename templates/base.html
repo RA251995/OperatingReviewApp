@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>SOS Review</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script> <!-- Include main.js -->
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body>
     <header>
@@ -13,7 +13,10 @@
     </header>
     <main>{% block content %}{% endblock %}</main>
     <footer>
-        &copy; 2025 &nbsp; 110 kV SUBSTATION PAMPADY
+        &copy; 2025 &nbsp; 110 kV SUBSTATION PAMPADY &nbsp; | &nbsp;
+        <a href="https://github.com/RA251995/OperatingReviewApp" target="_blank" class="github-link">
+            Project Page
+        </a>
     </footer>
 </body>
 </html>
