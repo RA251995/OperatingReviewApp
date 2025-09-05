@@ -33,7 +33,7 @@
         {% if eht_data and eht_data|length > 0 %}
           {% for row in eht_data %}
           <tr>
-            <td>{{ row.feedercode }}</td>
+            <td>{{ row.code }}</td>
             <td>{{ row.started }}</td>
             <td>{{ row.ended }}</td>
             <td>
@@ -84,7 +84,7 @@
         {% if eht_data_summary and eht_data_summary|length > 0 %}
           {% for row in eht_data_summary %}
           <tr>
-            <td>{{ row.feedercode }}</td>
+            <td>{{ row.code }}</td>
             <td>
               {{ row.ksebl_duration }}
               {% if row.ksebl_duration is not none %}
@@ -163,7 +163,7 @@
         {% if tf_data and tf_data|length > 0 %}
           {% for row in tf_data %}
           <tr>
-            <td>{{ row.feedercode }}</td>
+            <td>{{ row.code }}</td>
             <td>{{ row.started }}</td>
             <td>{{ row.ended }}</td>
             <td>
@@ -214,7 +214,7 @@
         {% if tf_data_summary and tf_data_summary|length > 0 %}
           {% for row in tf_data_summary %}
           <tr>
-            <td>{{ row.feedercode }}</td>
+            <td>{{ row.code }}</td>
             <td>
               {{ row.ksebl_duration }}
               {% if row.ksebl_duration is not none %}

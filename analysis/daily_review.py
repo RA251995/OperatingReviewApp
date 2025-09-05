@@ -2,6 +2,8 @@
 Module to calculate daily min and max current values for feeders, EHT, and transformers.
 """
 
+from pprint import pprint
+from analysis.utils import get_eht_feeder_order, get_ht_feeder_order, get_tf_order, sort_by_order
 from routes.db_service import get_connection
 from datetime import datetime, timedelta
 
@@ -59,11 +61,40 @@ def get_daily_current_stat(db_path, query_date, db_table="sosht", db_code_column
             'max_time': max_row['time']
         })
 
+    # Sort result based on feeder/transformer order from master tables
+    code_order = []
+    if db_table == "sosht":
+        code_order = get_ht_feeder_order(db_path)
+    elif db_table == "soseht":
+        code_order = get_eht_feeder_order(db_path)
+    elif db_table == "sostf":
+        code_order = get_tf_order(db_path)
+    result = sort_by_order(result, 'code', code_order)
+
     return result
 
 def get_daily_em_diff_stat(db_path, query_date, db_table="sosht", db_code_column="feedercode"):
     """
     Returns a list of dicts with code, min/max Δ EM Import/Export and their times for a given date.
+
+    Args:
+        db_path (str): Path to the SQLite database.
+        query_date (str): Date in 'DD-MM-YYYY' format.
+        db_table (str): Table name to query ('sosht', 'soseht', 'sostf').
+        db_code_column (str): Column name for code ('feedercode', 'tfcode').
+    Returns:
+        list of dict: Each dict contains:
+            {
+                'code': code,
+                'max_delta_emc_import': ...,
+                'time_max_delta_emc_import': ...,
+                'min_delta_emc_import': ...,
+                'time_min_delta_emc_import': ...,
+                'max_delta_emc_export': ...,
+                'time_max_delta_emc_export': ...,
+                'min_delta_emc_export': ...,
+                'time_min_delta_emc_export': ...
+            }
     """
 
     # Prepare all times for the day
@@ -94,7 +125,7 @@ def get_daily_em_diff_stat(db_path, query_date, db_table="sosht", db_code_column
 
     # For each hour, calculate delta using current and previous hour
     all_rows = []
-    for i, time in enumerate(allowed_times):
+    for time in allowed_times:
         if time == "01:00":
             prev_time = "24:00"
             prev_date = prev_date_str
@@ -137,24 +168,14 @@ def get_daily_em_diff_stat(db_path, query_date, db_table="sosht", db_code_column
                     'time': time
                 })
 
-    # Collect feeder order as they appear in the data
-    feeder_order = []
-    seen = set()
-    for row in rows:
-        code = row[db_code_column]
-        if code not in seen:
-            feeder_order.append(code)
-            seen.add(code)
-
-    # Group by code and find min/max
-    codes = {}
+    # Group all_rows by code
+    code_dict = {}
     for row in all_rows:
         code = row['code']
-        codes.setdefault(code, []).append(row)
+        code_dict.setdefault(code, []).append(row)
 
     result = []
-    for code in feeder_order:  # Use the collected order
-        values = codes.get(code, [])
+    for code, values in code_dict.items():
         import_vals = [v for v in values if v['delta_emc_import'] is not None]
         export_vals = [v for v in values if v['delta_emc_export'] is not None]
         if import_vals:
@@ -178,12 +199,42 @@ def get_daily_em_diff_stat(db_path, query_date, db_table="sosht", db_code_column
             'min_delta_emc_export': min_export['delta_emc_export'],
             'time_min_delta_emc_export': min_export['time'],
         })
+
+    code_order = []
+    if db_table == "sosht":
+        code_order = get_ht_feeder_order(db_path)
+    elif db_table == "soseht":
+        code_order = get_eht_feeder_order(db_path)
+    elif db_table == "sostf":
+        code_order = get_tf_order(db_path)
+    result = sort_by_order(result, 'code', code_order)
+
     return result
 
 def get_station_peak_min(db_path, query_date):
     """
     Returns a dict with station peak (max) and min load (PLPM - PMKJ) and their times,
     and min/max voltage (and times) for 1PMKJ or 1PLPM feeders.
+
+    Args:
+        db_path (str): Path to the SQLite database.
+        query_date (str): Date in 'DD-MM-YYYY' format.
+
+    Returns:
+        dict: {
+            "peak": max load,
+            "peak_time": time of max load,
+            "min": min load,
+            "min_time": time of min load,
+            "min_voltage": min voltage,
+            "min_voltage_time": time of min voltage,
+            "max_voltage": max voltage,
+            "max_voltage_time": time of max voltage,
+            "plpm_max_load": max PLPM current,
+            "plpm_max_load_time": time of max PLPM current,
+            "pmkj_max_load": max PMKJ current,
+            "pmkj_max_load_time": time of max PMKJ current
+        }
     """
     conn = get_connection(db_path)
     cursor = conn.cursor()
@@ -278,6 +329,21 @@ def get_station_peak_min(db_path, query_date):
 def get_incomers_peak_min(db_path, query_date):
     """
     Returns a dict with incomers max and min load (INCOMER I + INCOMER II) and their times for the given table/date.
+    
+    Args:
+        db_path (str): Path to the SQLite database.
+        query_date (str): Date in 'DD-MM-YYYY' format.
+    Returns:
+        dict: {
+            "peak": max load,
+            "peak_time": time of max load,
+            "min": min load,
+            "min_time": time of min load,
+            "min_voltage": min voltage,
+            "min_voltage_time": time of min voltage,
+            "max_voltage": max voltage,
+            "max_voltage_time": time of max voltage
+        }
     """
     conn = get_connection(db_path)
     cursor = conn.cursor()

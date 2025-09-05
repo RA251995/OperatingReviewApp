@@ -136,9 +136,12 @@ def daily_review_energy():
         tf_em_diff=tf_em_diff
     )
 
+# Monthly energy review route
 @sos_bp.route("/mor-energy", methods=["GET", "POST"])
 def mor_energy():
     ht_data = None
+    eht_data = None
+    tf_data = None
 
     if request.method == "POST":
         selected_month = request.form.get("month")
@@ -157,9 +160,13 @@ def mor_energy():
         tf_data=tf_data
     )
 
+# Monthly EHT and T/F Interruptions and Summary route
 @sos_bp.route("/mor-eht-tf-interruptions", methods=["GET", "POST"])
 def mor_eht_tf_interruptions():
     eht_data = None
+    eht_data_summary = None
+    tf_data = None
+    tf_data_summary = None
 
     if request.method == "POST":
         selected_month = request.form.get("month")
@@ -181,9 +188,10 @@ def mor_eht_tf_interruptions():
         tf_data_summary=tf_data_summary
     )
 
+# Monthly HT Interruption Summary route
 @sos_bp.route("/mor-ht-interruptions", methods=["GET", "POST"])
 def mor_ht_interruptions():
-    eht_data = None
+    ht_data = None
 
     if request.method == "POST":
         selected_month = request.form.get("month")

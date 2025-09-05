@@ -1,4 +1,4 @@
-from analysis.utils import max_decimal_places
+from analysis.utils import get_eht_feeder_order, get_ht_feeder_order, get_tf_order, max_decimal_places, sort_by_order
 from routes.db_service import get_connection
 from datetime import datetime, timedelta
 from calendar import monthrange
@@ -39,7 +39,7 @@ def get_monthly_energy(db_path, year_month, db_table="sosht", db_code_column="fe
     prev_month_last_day_str = prev_month_last_day.strftime("%d-%m-%Y")
     last_day_str = last_day.strftime("%d-%m-%Y")
 
-    # Fetch all relevant readings in one query (order by rowid to preserve insertion order)
+    # Fetch all relevant readings in one query
     query = f"""
         SELECT {db_code_column}, dateobserved, emc_export, emc_import, mf_export, mf_import
         FROM {db_table}
@@ -48,18 +48,19 @@ def get_monthly_energy(db_path, year_month, db_table="sosht", db_code_column="fe
     """
     cursor.execute(query, (prev_month_last_day_str, last_day_str))
     readings = cursor.fetchall()
+    conn.close()
 
-    # Organize readings by (feedercode/tfcode, dateobserved) and preserve order of first appearance
+    # Organize readings by (code, dateobserved)
     readings_dict = {}
-    feeder_order = []
     for row in readings:
         key = (row[db_code_column], row['dateobserved'])
         readings_dict[key] = row
-        if row[db_code_column] not in feeder_order:
-            feeder_order.append(row[db_code_column])
+
+    # Get all unique codes present in readings
+    codes = set(row[db_code_column] for row in readings)
 
     result = []
-    for code in feeder_order:
+    for code in codes:
         ir_row = readings_dict.get((code, prev_month_last_day_str))
         fr_row = readings_dict.get((code, last_day_str))
 
@@ -98,7 +99,15 @@ def get_monthly_energy(db_path, year_month, db_table="sosht", db_code_column="fe
             'actual_import_energy': actual_import_energy
         })
 
-    conn.close()
+    code_order = []
+    if db_table == "sosht":
+        code_order = get_ht_feeder_order(db_path)
+    elif db_table == "soseht":
+        code_order = get_eht_feeder_order(db_path)
+    elif db_table == "sostf":
+        code_order = get_tf_order(db_path)
+    result = sort_by_order(result, 'code', code_order)
+    
     return result
 
 def get_eht_tf_monthly_interruptions(db_path, year_month, fdrtype):
@@ -108,11 +117,12 @@ def get_eht_tf_monthly_interruptions(db_path, year_month, fdrtype):
     Args:
         db_path (str): Path to the SQLite database.
         year_month (str): Month in 'YYYY-MM' format.
+        fdrtype (str): 'EHT' or 'T/F' to filter the interruptions.
 
     Returns:
         list of dict: Each dict contains:
             {
-                'feedercode': ...,
+                'code': ...,
                 'started': ...,
                 'ended': ...,
                 'duration': ...,
@@ -161,7 +171,7 @@ def get_eht_tf_monthly_interruptions(db_path, year_month, fdrtype):
             duration = None
 
         result.append({
-            'feedercode': row['feedercode'],
+            'code': row['feedercode'],
             'started': row['started'],
             'ended': row['ended'],
             'duration': duration,
@@ -170,6 +180,15 @@ def get_eht_tf_monthly_interruptions(db_path, year_month, fdrtype):
             'relays': row['relays'],
             'type': row['belongsto'],
         })
+
+    code_order = []
+    if fdrtype == "EHT":
+        code_order = get_eht_feeder_order(db_path)
+        result = sort_by_order(result, 'code', code_order)
+    elif fdrtype == "T/F":
+        # For T/F interruptions in DB, sort alphabetically by code (Couldnot find a predefined order in DB)
+        result = sorted(result, key=lambda x: x['code'])
+    
     return result
 
 def get_eht_tf_monthly_interruptions_summary(interruptions, year_month):
@@ -183,7 +202,7 @@ def get_eht_tf_monthly_interruptions_summary(interruptions, year_month):
     Returns:
         list of dict: Each dict contains:
             {
-                'feedercode': ...,
+                'code': ...,
                 'ksebl_duration': ...,
                 'others_duration': ...,
                 'scheduled_duration': ...,
@@ -194,10 +213,10 @@ def get_eht_tf_monthly_interruptions_summary(interruptions, year_month):
     """
     summary_dict = {}
     for row in interruptions:
-        code = row['feedercode']
+        code = row['code']
         if code not in summary_dict:
             summary_dict[code] = {
-                'feedercode': code,
+                'code': code,
                 'ksebl_duration': 0,
                 'others_duration': 0,
                 'scheduled_duration': 0,
@@ -293,26 +312,7 @@ def get_ht_monthly_interruptions_summary(db_path, year_month):
             result[feedercode]['unscheduled_duration'] = row['total_duration']
             result[feedercode]['unscheduled_count'] = row['interruption_count']
 
-    order_list = get_feeder_order(db_path)
-    result = sorted(
-        result.values(),
-        key=lambda x: order_list.index(x['feedercode']) if x['feedercode'] in order_list else len(order_list)
-    )
+    order_list = get_ht_feeder_order(db_path)
+    result = sort_by_order(list(result.values()), 'feedercode', order_list)
 
     return result
-
-def get_feeder_order(db_path):
-    """
-    Fetches the feeder order from the feeder11kvmaster table.
-    
-    Args:
-        db_path (str): Path to the SQLite database.
-    Returns:
-        list: List of feedercode_11 in the order defined by feederorder.
-    """
-    conn = get_connection(db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT feedercode_11 FROM feeder11kvmaster ORDER BY feederorder")
-    order_list = [row['feedercode_11'] for row in cursor.fetchall()]
-    conn.close()
-    return order_list
