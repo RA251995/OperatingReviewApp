@@ -11,7 +11,7 @@ Web application to review and analyze SOS data.
     - Town ABC Feeder Details
 
 ## Usage
-- Download latest exe file from [GitHub Releases](https://github.com/RA251995/OperatingReviewApp/releases)
+- Download latest OperatingReview.exe file from [GitHub Releases](https://github.com/RA251995/OperatingReviewApp/releases)
 - Run OperatingReview.exe
 - Open any browser (preferably, Chrome) and go to http://localhost:5000/
 
