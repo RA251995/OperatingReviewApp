@@ -1,2 +1,1 @@
-pip install pyinstaller
-pyinstaller --onefile --add-data "templates;templates" --add-data "static;static" --add-data "config.ini;." app.py
+pyinstaller --onefile --name OperatingReview --icon "logo.ico" --add-data "templates;templates" --add-data "static;static" app.py
