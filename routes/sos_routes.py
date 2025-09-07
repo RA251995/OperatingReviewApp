@@ -6,12 +6,14 @@ This module defines the blueprint and view functions for:
 - Hourly review page (fetches and displays feeder/transformer data)
 """
 
-from flask import Blueprint, render_template, request, current_app
+from flask import Blueprint, render_template, request, current_app, flash, redirect, url_for
+from routes.app_utils import is_valid_sqlite_db, update_config_database, get_config_database
 from utils.date_utils import format_date, generate_allowed_times, get_closest_allowed_datetime, get_previous_month, get_previous_date
 from analysis.hourly_review import get_em_diff, get_station_load
 from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
 from analysis.monthly_review import get_eht_tf_monthly_interruptions, get_eht_tf_monthly_interruptions_summary, get_ht_monthly_interruptions_summary, get_monthly_energy
 from analysis.abc_details import get_abc_details
+import os
 
 # Create a Blueprint for SOS routes
 sos_bp = Blueprint('sos', __name__)
@@ -224,3 +226,26 @@ def abc_details():
         selected_month=selected_month,
         abc_details=abc_details
     )
+
+# Settings route for configuring application settings
+@sos_bp.route("/settings", methods=["GET", "POST"])
+def settings():
+    db_path = get_config_database()
+    if db_path is None:
+        db_path = ""
+
+    if request.method == "POST":
+        new_db_path = request.form.get("db_path", "").strip()
+        # Only allow full absolute path
+        if new_db_path and os.path.isabs(new_db_path):
+            if is_valid_sqlite_db(new_db_path):
+                update_config_database(new_db_path)
+                current_app.config['DATABASE'] = new_db_path
+                flash("Database path updated!", "success")
+                return redirect(url_for('sos.settings'))
+            else:
+                flash("Invalid database file. Please select a valid database.", "error")
+        else:
+            flash("Please enter a valid absolute database path.", "error")
+
+    return render_template("settings.html", db_path=db_path)

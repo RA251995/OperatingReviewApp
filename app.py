@@ -7,16 +7,19 @@ registers blueprints, and runs the development server.
 
 from flask import Flask
 from routes.sos_routes import sos_bp
-import configparser
+from routes.app_utils import get_config_database
 import os
+import secrets
 
 # Create Flask application instance
 app = Flask(__name__)
 
-# Load configuration from config.ini
-config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
-app.config['DATABASE'] = config.get('SOSOFFLINE', 'DATABASE')
+# Add secret key for session management
+app.secret_key = secrets.token_hex(32)
+
+db_path = get_config_database()
+
+app.config['DATABASE'] = db_path
 
 # Register the SOS blueprint containing all routes
 app.register_blueprint(sos_bp)

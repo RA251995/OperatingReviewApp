@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="header-flex">
+  <a href="{{ url_for('sos.index') }}" class="btn" title="Home">Home</a>
+  <h2 class="center-heading">Settings</h2>
+</div>
+<div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert-box {% if category == 'success' %}alert-success{% else %}alert-error{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <form method="POST" class="settings-form">
+        <label for="db_path">
+          Database Path:
+        </label>
+        <input type="text" id="db_path" name="db_path" value="{{ db_path }}">
+        <div class="tooltip">Enter the full absolute path to database file in SOS Offline folder (Eg.: D:\SOSOfflinepower-system.s3db.db)</div>
+        <div class="settings-form-actions">
+        <button type="submit" class="btn">Update</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
