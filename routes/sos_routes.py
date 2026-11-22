@@ -6,14 +6,14 @@ This module defines the blueprint and view functions for:
 - Hourly review page (fetches and displays feeder/transformer data)
 """
 
-from flask import Blueprint, render_template, request, current_app, flash, redirect, url_for
+from flask import Blueprint, render_template, request, current_app, flash, redirect, url_for, session
 from routes.app_utils import is_valid_sqlite_db, update_config_database, get_config_database, get_station_config, update_station_config
 from analysis.utils import get_eht_feeder_order, get_ht_feeder_order
 from utils.date_utils import format_date, generate_allowed_times, get_closest_allowed_datetime, get_previous_month, get_previous_date
 from analysis.hourly_review import get_em_diff, get_station_load
 from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
 from analysis.monthly_review import get_eht_tf_monthly_interruptions, get_eht_tf_monthly_interruptions_summary, get_ht_monthly_interruptions_summary, get_monthly_energy
-from analysis.abc_details import get_abc_details
+from analysis.feeder_details import get_feeder_details
 import os
 
 # Create a Blueprint for SOS routes
@@ -214,23 +214,31 @@ def mor_ht_interruptions():
         ht_data=ht_data
     )
 
-# ABC Feeder Details route
-@sos_bp.route("/abc-details", methods=["GET", "POST"])
-def abc_details():
-    abc_details = None
+# Monthly HT Feeder Details route
+@sos_bp.route("/feeder-details", methods=["GET", "POST"])
+def feeder_details():
+    db = current_app.config['DATABASE']
+    feeders = get_ht_feeder_order(db)
 
     if request.method == "POST":
         selected_month = request.form.get("month")
+        selected_feeder = request.form.get("feeder")
     else:
-        # Show previous month by default
+        # Show previous month and the last viewed feeder by default
         selected_month = get_previous_month()
-    
-    abc_details = get_abc_details(current_app.config['DATABASE'], selected_month)
+        selected_feeder = session.get("feeder_details_feeder")
+    if selected_feeder not in feeders:
+        selected_feeder = feeders[0] if feeders else None
+    session["feeder_details_feeder"] = selected_feeder
+
+    details = get_feeder_details(db, selected_month, selected_feeder) if selected_feeder else None
 
     return render_template(
-        "abc_details.html",
+        "feeder_details.html",
         selected_month=selected_month,
-        abc_details=abc_details
+        feeders=feeders,
+        selected_feeder=selected_feeder,
+        details=details
     )
 
 # Settings route for configuring application settings

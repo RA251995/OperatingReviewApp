@@ -8,7 +8,7 @@ Web application to review and analyze SOS data.
 - Monthly Operating Review
     - Interruptions
     - Energy Transaction
-    - Town ABC Feeder Details
+    - Feeder Details
 
 ## Usage
 - Download latest OperatingReview.exe file from [GitHub Releases](https://github.com/RA251995/OperatingReviewApp/releases)

@@ -24,7 +24,7 @@ class AutoReloadManager {
         });
 
         // Bind to time inputs
-        const timeInputs = document.querySelectorAll('select[name="time"]');
+        const timeInputs = document.querySelectorAll('select[name="time"], select[name="feeder"]');
         timeInputs.forEach(input => {
             input.addEventListener('change', (e) => this.handleTimeChange(e));
         });
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.pathname.includes('/mor-energy') || 
         window.location.pathname.includes('/mor-eht-tf-interruptions') || 
         window.location.pathname.includes('/mor-ht-interruptions') ||
-        window.location.pathname.includes('/abc-details')) {
+        window.location.pathname.includes('/feeder-details')) {
         window.autoReloadManager = new AutoReloadManager();
     }
 });

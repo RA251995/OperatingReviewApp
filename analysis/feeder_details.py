@@ -1,18 +1,19 @@
 """
-Module to analyze current statistics for the 'TOWN ABC' feeder in the sosht table.
+Module to analyze current statistics for an HT feeder in the sosht table.
 Provides a function to get mode, max, and count of currents within ±10% of mode for a given month.
 """
 
 from collections import Counter
 from routes.db_service import get_connection
 
-def get_abc_details(db_path, year_month):
+def get_feeder_details(db_path, year_month, feeder_code):
     """
-    Returns a dictionary with mode, max, and count within ±10% of mode for TOWN ABC feeder for a given month.
+    Returns a dictionary with mode, max, and count within ±10% of mode for the given HT feeder for a given month.
 
     Args:
         db_path (str): Path to the SQLite database.
         year_month (str): Month in 'YYYY-MM' format.
+        feeder_code (str): HT feeder code (feedercode in sosht).
 
     Returns:
         dict: {
@@ -34,11 +35,11 @@ def get_abc_details(db_path, year_month):
     query = """
     SELECT current, dateobserved, timeobserved
     FROM sosht
-    WHERE feedercode = 'TOWN ABC'
+    WHERE feedercode = ?
       AND current >= 0
       AND strftime('%Y-%m', substr(dateobserved, 7, 4) || '-' || substr(dateobserved, 4, 2) || '-' || substr(dateobserved, 1, 2)) = ?
     """
-    cursor.execute(query, (year_month,))
+    cursor.execute(query, (feeder_code, year_month))
     rows = cursor.fetchall()
     conn.close()
 
