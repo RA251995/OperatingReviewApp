@@ -246,6 +246,19 @@ footer {
     box-sizing: border-box;
 }
 
+.checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em 1.25em;
+}
+
+.settings-form .checkbox-item {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+}
+
 .settings-form-actions {
     margin-top: 0.5em;
     display: flex;

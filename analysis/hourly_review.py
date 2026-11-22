@@ -4,6 +4,7 @@ Module to calculate hourly EMC export/import differences and station load.
 
 from datetime import datetime, timedelta
 from analysis.utils import get_eht_feeder_order, get_tf_order, max_decimal_places, get_ht_feeder_order, sort_by_order
+from analysis.station_load import compute_station_load
 from routes.db_service import get_connection
 
 
@@ -126,36 +127,35 @@ def get_em_diff(date_str, time_str, db_path, db_table, db_code_column="feedercod
 
     return result
 
-def get_station_load(date_str, time_str, db_path):
+def get_station_load(date_str, time_str, db_path, incoming, outgoing):
     """
-    Calculates station load on 110 kV side as the difference in 'current' between '1PLPM' and '1PMKJ'
+    Calculates station load on the EHT side as sum(incoming) - sum(outgoing) feeder currents.
 
     Args:
         date_str (str): Date in 'dd-mm-yyyy' format.
         time_str (str): Time in 'HH:MM' format.
         db_path (str): Path to the SQLite database.
+        incoming (list): EHT feeder codes configured as incoming.
+        outgoing (list): EHT feeder codes configured as outgoing.
 
     Returns:
-        float or None: The station load (1PLPM - 1PMKJ) or None if data is missing.
+        float or None: The station load, or None if not configured or data is missing.
     """
+    codes = incoming + outgoing
+    if not incoming:
+        return None
+
     conn = get_connection(db_path)
     cursor = conn.cursor()
-    query = """
+    query = f"""
         SELECT feedercode, current
         FROM soseht
         WHERE dateobserved = ?
           AND timeobserved = ?
-          AND feedercode IN ('1PLPM', '1PMKJ')
+          AND feedercode IN ({','.join(['?'] * len(codes))})
     """
-    cursor.execute(query, (date_str, time_str))
-    rows = {row['feedercode']: row['current'] for row in cursor.fetchall()}
+    cursor.execute(query, (date_str, time_str, *codes))
+    currents = {row['feedercode']: row['current'] for row in cursor.fetchall()}
     conn.close()
 
-    if '1PLPM' in rows and '1PMKJ' in rows:
-        if rows['1PLPM'] < 0:
-            return rows['1PMKJ']
-        elif rows['1PMKJ'] < 0:
-            return rows['1PLPM']
-        return rows['1PLPM'] - rows['1PMKJ']
-    
-    return None
+    return compute_station_load(currents, incoming, outgoing)

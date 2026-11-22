@@ -13,7 +13,7 @@
     </header>
     <main>{% block content %}{% endblock %}</main>
     <footer>
-        &copy; 2025 &nbsp; 110 kV SUBSTATION PAMPADY &nbsp; | &nbsp;
+        &copy; 2025 &nbsp;{% if station.title %} {{ station.title }} &nbsp; | &nbsp;{% endif %}
         <a href="https://github.com/RA251995/OperatingReviewApp" target="_blank" class="github-link">
             Project Page
         </a>

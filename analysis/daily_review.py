@@ -4,6 +4,7 @@ Module to calculate daily min and max current values for feeders, EHT, and trans
 
 from pprint import pprint
 from analysis.utils import get_eht_feeder_order, get_ht_feeder_order, get_tf_order, sort_by_order
+from analysis.station_load import compute_station_load
 from routes.db_service import get_connection
 from datetime import datetime, timedelta
 
@@ -211,14 +212,17 @@ def get_daily_em_diff_stat(db_path, query_date, db_table="sosht", db_code_column
 
     return result
 
-def get_station_peak_min(db_path, query_date):
+def get_station_peak_min(db_path, query_date, incoming, outgoing):
     """
-    Returns a dict with station peak (max) and min load (PLPM - PMKJ) and their times,
-    and min/max voltage (and times) for 1PMKJ or 1PLPM feeders.
+    Returns a dict with station peak (max) and min load (sum(incoming) - sum(outgoing))
+    and their times, min/max voltage (and times) across the configured EHT feeders,
+    and the peak load on each configured EHT feeder.
 
     Args:
         db_path (str): Path to the SQLite database.
         query_date (str): Date in 'DD-MM-YYYY' format.
+        incoming (list): EHT feeder codes configured as incoming.
+        outgoing (list): EHT feeder codes configured as outgoing.
 
     Returns:
         dict: {
@@ -230,61 +234,10 @@ def get_station_peak_min(db_path, query_date):
             "min_voltage_time": time of min voltage,
             "max_voltage": max voltage,
             "max_voltage_time": time of max voltage,
-            "plpm_max_load": max PLPM current,
-            "plpm_max_load_time": time of max PLPM current,
-            "pmkj_max_load": max PMKJ current,
-            "pmkj_max_load_time": time of max PMKJ current
+            "line_peaks": [{"code", "load", "time"}, ...] for each configured feeder
         }
     """
-    conn = get_connection(db_path)
-    cursor = conn.cursor()
-    # Get all PLPM and PMKJ currents by time
-    cursor.execute(f"""
-        SELECT timeobserved, 
-               MAX(CASE WHEN feedercode = :feeder_code_1 THEN current END) AS feeder_1_current,
-               MAX(CASE WHEN feedercode = :feeder_code_2 THEN current END) AS feeder_2_current
-        FROM soseht
-        WHERE dateobserved = :query_date
-          AND (feedercode = :feeder_code_1 OR feedercode = :feeder_code_2)
-          AND current >= 0
-        GROUP BY timeobserved
-    """,  {
-        "feeder_code_1": '1PLPM',
-        "feeder_code_2": '1PMKJ',
-        "query_date": query_date
-    })
-    rows = cursor.fetchall()
-
-    # Calculate station load for each time
-    station_loads = []
-    plpm_rows, pmkj_rows = [], []
-    for row in rows:
-        plpm = row['feeder_1_current']
-        pmkj = row['feeder_2_current']
-        if plpm is not None:
-            plpm_rows.append({'load': plpm, 'time': row['timeobserved']})
-        if pmkj is not None:
-            pmkj_rows.append({'load': pmkj, 'time': row['timeobserved']})
-        if plpm is not None and pmkj is not None:
-            load = plpm - pmkj
-            station_loads.append({'load': load, 'time': row['timeobserved']})
-
-    # Get min/max voltage for 1PLPM or 1PMKJ
-    cursor.execute("""
-        SELECT feedercode, voltage, timeobserved
-        FROM soseht
-        WHERE dateobserved = ?
-          AND feedercode IN ('1PLPM', '1PMKJ')
-          AND voltage >= 0
-    """, (query_date,))
-    voltage_rows = cursor.fetchall()
-    conn.close()
-
-    min_voltage_row = max_voltage_row = None
-    if voltage_rows:
-        min_voltage_row = min(voltage_rows, key=lambda x: x['voltage'])
-        max_voltage_row = max(voltage_rows, key=lambda x: x['voltage'])
-
+    codes = incoming + outgoing
     result = {
         "peak": None,
         "peak_time": None,
@@ -294,11 +247,57 @@ def get_station_peak_min(db_path, query_date):
         "min_voltage_time": None,
         "max_voltage": None,
         "max_voltage_time": None,
-        "plpm_max_load": None,
-        "plpm_max_load_time": None,
-        "pmkj_max_load": None,
-        "pmkj_max_load_time": None
+        "line_peaks": [{"code": code, "load": None, "time": None} for code in codes]
     }
+    if not codes:
+        return result
+
+    placeholders = ','.join(['?'] * len(codes))
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+    # Get currents of all configured feeders, grouped by time
+    cursor.execute(f"""
+        SELECT feedercode, current, timeobserved
+        FROM soseht
+        WHERE dateobserved = ?
+          AND feedercode IN ({placeholders})
+    """, (query_date, *codes))
+    currents_by_time = {}
+    line_rows = {code: [] for code in codes}
+    for row in cursor.fetchall():
+        if row['current'] is None:
+            continue
+        currents_by_time.setdefault(row['timeobserved'], {})[row['feedercode']] = row['current']
+        line_rows[row['feedercode']].append({'load': row['current'], 'time': row['timeobserved']})
+
+    # Calculate station load for each time
+    station_loads = []
+    for time, currents in currents_by_time.items():
+        load = compute_station_load(currents, incoming, outgoing)
+        if load is not None:
+            station_loads.append({'load': load, 'time': time})
+
+    # Get min/max voltage across the configured feeders
+    cursor.execute(f"""
+        SELECT feedercode, voltage, timeobserved
+        FROM soseht
+        WHERE dateobserved = ?
+          AND feedercode IN ({placeholders})
+          AND voltage >= 0
+    """, (query_date, *codes))
+    voltage_rows = cursor.fetchall()
+    conn.close()
+
+    min_voltage_row = max_voltage_row = None
+    if voltage_rows:
+        min_voltage_row = min(voltage_rows, key=lambda x: x['voltage'])
+        max_voltage_row = max(voltage_rows, key=lambda x: x['voltage'])
+
+    for line in result["line_peaks"]:
+        if line_rows[line["code"]]:
+            max_line = max(line_rows[line["code"]], key=lambda x: x['load'])
+            line["load"] = max_line['load']
+            line["time"] = max_line['time']
 
     if station_loads:
         max_row = max(station_loads, key=lambda x: x['load'])
@@ -314,25 +313,18 @@ def get_station_peak_min(db_path, query_date):
     if max_voltage_row:
         result["max_voltage"] = max_voltage_row['voltage']
         result["max_voltage_time"] = max_voltage_row['timeobserved']
-    
-    if plpm_rows:
-        max_plpm = max(plpm_rows, key=lambda x: x['load'])
-        result["plpm_max_load"] = max_plpm['load']
-        result["plpm_max_load_time"] = max_plpm['time']
-    if pmkj_rows:
-        max_pmkj = max(pmkj_rows, key=lambda x: x['load'])
-        result["pmkj_max_load"] = max_pmkj['load']
-        result["pmkj_max_load_time"] = max_pmkj['time']
 
     return result
 
-def get_incomers_peak_min(db_path, query_date):
+def get_incomers_peak_min(db_path, query_date, incomers):
     """
-    Returns a dict with incomers max and min load (INCOMER I + INCOMER II) and their times for the given table/date.
-    
+    Returns a dict with incomers max and min load (sum of the configured 11 kV incomers)
+    and their times, and min/max voltage across the incomers, for the given date.
+
     Args:
         db_path (str): Path to the SQLite database.
         query_date (str): Date in 'DD-MM-YYYY' format.
+        incomers (list): HT feeder codes configured as incomers.
     Returns:
         dict: {
             "peak": max load,
@@ -345,35 +337,6 @@ def get_incomers_peak_min(db_path, query_date):
             "max_voltage_time": time of max voltage
         }
     """
-    conn = get_connection(db_path)
-    cursor = conn.cursor()
-    # Get all INCOMER I and INCOMER II total current by time
-    cursor.execute(f"""
-        SELECT timeobserved, SUM(current) as total_load
-        FROM sosht
-        WHERE dateobserved = ?
-          AND feedercode IN ('INCOMER I', 'INCOMER II')
-        GROUP BY timeobserved
-        ORDER BY timeobserved
-    """,  (query_date,))
-    load_rows = cursor.fetchall()
-
-    # Get min/max voltage for 1PLPM or 1PMKJ
-    cursor.execute("""
-        SELECT feedercode, voltage, timeobserved
-        FROM sosht
-        WHERE dateobserved = ?
-          AND feedercode IN ('INCOMER I', 'INCOMER II')
-          AND voltage >= 0
-    """, (query_date,))
-    voltage_rows = cursor.fetchall()
-    conn.close()
-
-    min_voltage_row = max_voltage_row = None
-    if voltage_rows:
-        min_voltage_row = min(voltage_rows, key=lambda x: x['voltage'])
-        max_voltage_row = max(voltage_rows, key=lambda x: x['voltage'])
-
     result = {
         "peak": None,
         "peak_time": None,
@@ -384,6 +347,38 @@ def get_incomers_peak_min(db_path, query_date):
         "max_voltage": None,
         "max_voltage_time": None
     }
+    if not incomers:
+        return result
+
+    placeholders = ','.join(['?'] * len(incomers))
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+    # Get total current of all incomers by time
+    cursor.execute(f"""
+        SELECT timeobserved, SUM(current) as total_load
+        FROM sosht
+        WHERE dateobserved = ?
+          AND feedercode IN ({placeholders})
+        GROUP BY timeobserved
+        ORDER BY timeobserved
+    """,  (query_date, *incomers))
+    load_rows = cursor.fetchall()
+
+    # Get min/max voltage across the incomers
+    cursor.execute(f"""
+        SELECT feedercode, voltage, timeobserved
+        FROM sosht
+        WHERE dateobserved = ?
+          AND feedercode IN ({placeholders})
+          AND voltage >= 0
+    """, (query_date, *incomers))
+    voltage_rows = cursor.fetchall()
+    conn.close()
+
+    min_voltage_row = max_voltage_row = None
+    if voltage_rows:
+        min_voltage_row = min(voltage_rows, key=lambda x: x['voltage'])
+        max_voltage_row = max(voltage_rows, key=lambda x: x['voltage'])
 
     if load_rows:
         max_row = max(load_rows, key=lambda x: x['total_load'])

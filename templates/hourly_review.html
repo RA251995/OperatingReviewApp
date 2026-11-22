@@ -25,7 +25,7 @@
     <table border="1">
       <thead>
         <tr>
-          <th>110 kV Feeder</th>
+          <th>{{ station.eht_label }} Feeder</th>
           <th>Load (A)</th>
           <th>EM Import</th>
           <th>EM Export</th>
@@ -62,7 +62,7 @@
       </thead>
       <tbody>
         <tr>
-          <td>110 kV</td>
+          <td>{{ station.eht_label }}</td>
           <td>
             {% if station_load is not none %}
               {{ station_load }}
@@ -113,7 +113,7 @@
     <table border="1">
       <thead>
         <tr>
-          <th>11 kV Feeder</th>
+          <th>{{ station.ht_label }} Feeder</th>
           <th>Load (A)</th>
           <th>EM Import</th>
           <th>EM Export</th>

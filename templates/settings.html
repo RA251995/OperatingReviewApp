@@ -24,5 +24,53 @@
         <button type="submit" class="btn">Update</button>
         </div>
     </form>
+
+    <form method="POST" class="settings-form">
+        <input type="hidden" name="form" value="station">
+        <h3 class="section-heading">Station{% if station.title %} &ndash; {{ station.title }}{% endif %}</h3>
+
+        <label>EHT Feeders:</label>
+        <div class="tooltip">Station load = sum of Incoming &minus; sum of Outgoing feeder currents</div>
+        {% if eht_feeders %}
+        <div class="table-block">
+          <table>
+            <thead>
+              <tr><th>Feeder</th><th>Incoming</th><th>Outgoing</th><th>Not used</th></tr>
+            </thead>
+            <tbody>
+              {% for code in eht_feeders %}
+              <tr>
+                <td style="text-align:left;">{{ code }}<input type="hidden" name="eht_code" value="{{ code }}"></td>
+                <td style="text-align:center;"><input type="radio" name="eht_role_{{ code }}" value="incoming" {% if code in station.eht_incoming %}checked{% endif %}></td>
+                <td style="text-align:center;"><input type="radio" name="eht_role_{{ code }}" value="outgoing" {% if code in station.eht_outgoing %}checked{% endif %}></td>
+                <td style="text-align:center;"><input type="radio" name="eht_role_{{ code }}" value="none" {% if code not in station.eht_incoming and code not in station.eht_outgoing %}checked{% endif %}></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="tooltip">Set a valid database path above to list EHT feeders.</div>
+        {% endif %}
+
+        <label>HT Incomers:</label>
+        <div class="tooltip">Feeders whose currents are summed for the HT station peak/min load</div>
+        {% if ht_feeders %}
+        <div class="checkbox-list">
+          {% for code in ht_feeders %}
+          <label class="checkbox-item">
+            <input type="checkbox" name="ht_incomer" value="{{ code }}" {% if code in station.ht_incomers %}checked{% endif %}>
+            {{ code }}
+          </label>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="tooltip">Set a valid database path above to list HT feeders.</div>
+        {% endif %}
+
+        <div class="settings-form-actions">
+        <button type="submit" class="btn">Save Station Settings</button>
+        </div>
+    </form>
 </div>
 {% endblock %}

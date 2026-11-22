@@ -28,23 +28,65 @@ def is_valid_sqlite_db(db_path):
     except Exception:
         return False
 
+def _update_config_section(section, values):
+    """
+    Updates (or creates) the given section of sos_config.ini with the given values,
+    leaving other sections untouched.
+    """
+    config_path = get_config_path()
+    config = configparser.ConfigParser(interpolation=None)
+    if os.path.exists(config_path):
+        config.read(config_path)
+    if section not in config:
+        config[section] = {}
+    for key, value in values.items():
+        config[section][key] = value
+    with open(config_path, 'w') as configfile:
+        config.write(configfile)
+
 def update_config_database(db_path):
     """
     Updates (or creates) the sos_config.ini file in the user's home directory with the given db_path.
     Ensures the [SOSOFFLINE] section exists and sets the DATABASE value.
     """
+    _update_config_section('SOSOFFLINE', {'DATABASE': db_path})
+
+# Station settings stored in the [STATION] section of sos_config.ini.
+# Feeder code lists are stored comma-separated. (Substation name and voltage
+# levels are read from the database instead - see analysis.utils.get_station_info.)
+STATION_DEFAULTS = {
+    'eht_incoming': [],
+    'eht_outgoing': [],
+    'ht_incomers': [],
+}
+
+def _split_codes(value):
+    return [code.strip() for code in value.split(',') if code.strip()]
+
+def get_station_config():
+    """
+    Returns the station settings as a dict (see STATION_DEFAULTS), with feeder
+    code lists parsed into Python lists. Missing values fall back to defaults.
+    """
+    station = {key: list(value) for key, value in STATION_DEFAULTS.items()}
     config_path = get_config_path()
-    config = configparser.ConfigParser()
-    # If sos_config.ini does not exist, create it with default section
     if not os.path.exists(config_path):
-        config['SOSOFFLINE'] = {'DATABASE': db_path}
-    else:
-        config.read(config_path)
-        if 'SOSOFFLINE' not in config:
-            config['SOSOFFLINE'] = {}
-        config['SOSOFFLINE']['DATABASE'] = db_path
-    with open(config_path, 'w') as configfile:
-        config.write(configfile)
+        return station
+    config = configparser.ConfigParser(interpolation=None)
+    config.read(config_path)
+    if 'STATION' not in config:
+        return station
+    for key in STATION_DEFAULTS:
+        if key in config['STATION']:
+            station[key] = _split_codes(config['STATION'][key])
+    return station
+
+def update_station_config(station):
+    """
+    Saves the given station settings dict to the [STATION] section of sos_config.ini.
+    """
+    values = {key: ','.join(station.get(key, default)) for key, default in STATION_DEFAULTS.items()}
+    _update_config_section('STATION', values)
 
 def get_config_database():
     """
@@ -52,7 +94,7 @@ def get_config_database():
     If the file or section/key does not exist, returns None.
     """
     config_path = get_config_path()
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
     if os.path.exists(config_path):
         config.read(config_path)
         return config.get('SOSOFFLINE', 'DATABASE', fallback="")

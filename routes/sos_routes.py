@@ -7,7 +7,8 @@ This module defines the blueprint and view functions for:
 """
 
 from flask import Blueprint, render_template, request, current_app, flash, redirect, url_for
-from routes.app_utils import is_valid_sqlite_db, update_config_database, get_config_database
+from routes.app_utils import is_valid_sqlite_db, update_config_database, get_config_database, get_station_config, update_station_config
+from analysis.utils import get_eht_feeder_order, get_ht_feeder_order
 from utils.date_utils import format_date, generate_allowed_times, get_closest_allowed_datetime, get_previous_month, get_previous_date
 from analysis.hourly_review import get_em_diff, get_station_load
 from analysis.daily_review import get_daily_current_stat, get_daily_em_diff_stat, get_station_peak_min, get_incomers_peak_min
@@ -26,9 +27,9 @@ def index():
 # Hourly review route for displaying feeder/transformer data
 @sos_bp.route("/hourly-review", methods=["GET", "POST"])
 def hourly_review():
-    eht_data = []  # 110 kV feeder data
+    eht_data = []  # EHT feeder data
     tf_data = []   # Transformer data
-    ht_data = []   # 11 kV feeder data
+    ht_data = []   # HT feeder data
     station_load = None  # Station load data
     allowed_times = generate_allowed_times()  # List of allowed times for selection
 
@@ -46,7 +47,9 @@ def hourly_review():
     tf_data = get_em_diff(formatted_date, selected_time, db_path=current_app.config['DATABASE'], db_table="sostf", db_code_column="tfcode")
     ht_data = get_em_diff(formatted_date, selected_time, db_path=current_app.config['DATABASE'], db_table="sosht")
     # Fetch station load
-    station_load = get_station_load(formatted_date, selected_time, db_path=current_app.config['DATABASE'])
+    station = current_app.config['STATION']
+    station_load = get_station_load(formatted_date, selected_time, current_app.config['DATABASE'],
+                                    station['eht_incoming'], station['eht_outgoing'])
 
     # Render the hourly review template with all required data
     return render_template(
@@ -74,8 +77,11 @@ def daily_review_summary():
 
     query_date = format_date(selected_date)
 
-    station_peak_min = get_station_peak_min(current_app.config['DATABASE'], query_date)
-    incomers_peak_min = get_incomers_peak_min(current_app.config['DATABASE'], query_date)
+    station = current_app.config['STATION']
+    station_peak_min = get_station_peak_min(current_app.config['DATABASE'], query_date,
+                                            station['eht_incoming'], station['eht_outgoing'])
+    incomers_peak_min = get_incomers_peak_min(current_app.config['DATABASE'], query_date,
+                                              station['ht_incomers'])
 
     return render_template(
         "daily_review_summary.html",
@@ -234,6 +240,18 @@ def settings():
     if db_path is None:
         db_path = ""
 
+    if request.method == "POST" and request.form.get("form") == "station":
+        eht_codes = request.form.getlist("eht_code")
+        station = {
+            'eht_incoming': [c for c in eht_codes if request.form.get(f"eht_role_{c}") == "incoming"],
+            'eht_outgoing': [c for c in eht_codes if request.form.get(f"eht_role_{c}") == "outgoing"],
+            'ht_incomers': request.form.getlist("ht_incomer"),
+        }
+        update_station_config(station)
+        current_app.config['STATION'] = get_station_config()
+        flash("Station settings updated!", "success")
+        return redirect(url_for('sos.settings'))
+
     if request.method == "POST":
         new_db_path = request.form.get("db_path", "").strip()
         # Only allow full absolute path
@@ -248,4 +266,15 @@ def settings():
         else:
             flash("Please enter a valid absolute database path.", "error")
 
-    return render_template("settings.html", db_path=db_path)
+    # Feeder lists for the station settings form come from the database's master tables
+    eht_feeders, ht_feeders = [], []
+    db = current_app.config['DATABASE']
+    if db and is_valid_sqlite_db(db):
+        try:
+            eht_feeders = get_eht_feeder_order(db)
+            ht_feeders = get_ht_feeder_order(db)
+        except Exception:
+            flash("Could not read feeder lists from the database.", "error")
+
+    return render_template("settings.html", db_path=db_path,
+                           eht_feeders=eht_feeders, ht_feeders=ht_feeders)
