@@ -79,4 +79,4 @@ def sort_by_order(data_list, code_key, order_list):
     Returns:
         list: Sorted list of dictionaries.
     """
-    return sorted(data_list, key=lambda x: order_list.index(x[code_key]) if x[code_key] in order_list else len('inf'))
+    return sorted(data_list, key=lambda x: order_list.index(x[code_key]) if x[code_key] in order_list else float('inf'))
